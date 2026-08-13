@@ -272,6 +272,20 @@
         <button class="btn-primary" id="saveSettings">Enregistrer</button>
       </div>
 
+      <div class="card settings-card admin-only" id="adminManagerCard" style="display:none;">
+        <p class="eyebrow">Coordinateurs</p>
+        <p class="settings-hint">Les personnes listées ici ont accès à l'onglet Coordination et peuvent modifier la checklist et cette liste.</p>
+        <div id="adminList"></div>
+        <form id="addAdminForm" class="field" style="margin-top:10px;">
+          <span>Ajouter un coordinateur (e-mail)</span>
+          <div style="display:flex;gap:8px;">
+            <input type="email" id="newAdminEmail" placeholder="exemple@gmail.com" required style="flex:1;">
+            <button type="submit" class="btn-primary">Ajouter</button>
+          </div>
+        </form>
+        <p class="auth-error" id="adminManagerError"></p>
+      </div>
+
       <div class="card settings-card admin-only" id="checklistEditorCard" style="display:none;">
         <p class="eyebrow">Checklist spirituelle (visible par tous les Bâtisseurs)</p>
         <p class="settings-hint">Modifie les catégories et les éléments à cocher chaque jour. Enregistré ici, ça se met à jour pour tout le monde.</p>

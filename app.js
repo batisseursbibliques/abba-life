@@ -69,8 +69,10 @@ function defaultData() {
 let DATA = defaultData();
 let CURRENT_USER = null;
 let IS_ADMIN = false;
+let ADMIN_LIST = [];
 let unsubUserData = null;
 let unsubChecklist = null;
+let unsubAdmins = null;
 let suppressCloudWrite = false; // évite de renvoyer vers Firestore ce qu'on vient de recevoir de Firestore
 
 function loadLocalCache() {
@@ -129,6 +131,7 @@ document.addEventListener("DOMContentLoaded", () => {
   setupAuthScreen();
   setupCoordination();
   setupChecklistEditor();
+  setupAdminManager();
 
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("sw.js").catch(() => {});
@@ -196,22 +199,35 @@ async function onAuthChanged(user) {
   // On coupe les anciens écouteurs à chaque changement de compte
   if (unsubUserData) { unsubUserData(); unsubUserData = null; }
   if (unsubChecklist) { unsubChecklist(); unsubChecklist = null; }
+  if (unsubAdmins) { unsubAdmins(); unsubAdmins = null; }
 
   if (!user) {
     CURRENT_USER = null;
     IS_ADMIN = false;
+    ADMIN_LIST = [];
     document.getElementById("authScreen").style.display = "flex";
     document.getElementById("app").style.display = "none";
     return;
   }
 
   CURRENT_USER = user;
-  IS_ADMIN = window.AbbaSync.isAdminEmail(user.email);
   document.getElementById("authScreen").style.display = "none";
   document.getElementById("app").style.display = "";
   document.getElementById("accountEmailHint").textContent = `Connecté(e) en tant que ${user.displayName || user.email} (${user.email})`;
 
-  document.querySelectorAll(".admin-only").forEach(el => { el.style.display = IS_ADMIN ? "" : "none"; });
+  // Écoute en direct la liste des coordinateurs (modifiable depuis l'app)
+  unsubAdmins = window.AbbaSync.watchAdmins(async (emails) => {
+    ADMIN_LIST = emails || [];
+    const isBootstrap = window.AbbaSync.isAdminEmail(user.email);
+    const inDynamicList = ADMIN_LIST.map(e => e.toLowerCase()).includes(user.email.toLowerCase());
+    IS_ADMIN = isBootstrap || inDynamicList;
+    // Auto-amorçage : si tu es le coordinateur de secours et pas encore dans la liste, on t'y ajoute
+    if (isBootstrap && !inDynamicList) {
+      window.AbbaSync.ensureAdminSeed(user.email).catch(err => console.error("Amorçage admin :", err));
+    }
+    document.querySelectorAll(".admin-only").forEach(el => { el.style.display = IS_ADMIN ? "" : "none"; });
+    renderAdminManager();
+  });
 
   // Écoute en direct la checklist partagée
   unsubChecklist = window.AbbaSync.watchChecklist((categories) => {
@@ -383,6 +399,56 @@ function pushSummary() {
     last7,
     streak,
   }).catch(err => console.error("Résumé coordination :", err));
+}
+
+/* ============================================================
+   GESTION DES COORDINATEURS (coordinateurs uniquement)
+   ============================================================ */
+function setupAdminManager() {
+  document.getElementById("addAdminForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const input = document.getElementById("newAdminEmail");
+    const errEl = document.getElementById("adminManagerError");
+    errEl.textContent = "";
+    const email = input.value.trim();
+    if (!email) return;
+    try {
+      await window.AbbaSync.addAdmin(email, CURRENT_USER.email);
+      input.value = "";
+    } catch (err) {
+      errEl.textContent = "Impossible d'ajouter ce coordinateur. Vérifie ta connexion.";
+      console.error(err);
+    }
+  });
+}
+function renderAdminManager() {
+  if (!IS_ADMIN) return;
+  const wrap = document.getElementById("adminList");
+  wrap.innerHTML = "";
+  if (ADMIN_LIST.length === 0) {
+    wrap.innerHTML = `<p class="empty-hint" style="display:block;">Aucun coordinateur enregistré pour l'instant.</p>`;
+  }
+  ADMIN_LIST.forEach(email => {
+    const isSelf = CURRENT_USER && email.toLowerCase() === CURRENT_USER.email.toLowerCase();
+    const row = document.createElement("div");
+    row.className = "editor-item-row";
+    row.innerHTML = `
+      <span class="text-input" style="border:none;padding:8px 0;">${escapeAttr(email)}${isSelf ? " (toi)" : ""}</span>
+      ${isSelf ? "" : `<button type="button" class="editor-del-item" title="Retirer">🗑</button>`}
+    `;
+    if (!isSelf) {
+      row.querySelector(".editor-del-item").addEventListener("click", async () => {
+        if (!confirm(`Retirer ${email} de la liste des coordinateurs ?`)) return;
+        try {
+          await window.AbbaSync.removeAdmin(email);
+        } catch (err) {
+          alert("Impossible de retirer ce coordinateur. Vérifie ta connexion.");
+          console.error(err);
+        }
+      });
+    }
+    wrap.appendChild(row);
+  });
 }
 
 /* ============================================================
