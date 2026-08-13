@@ -64,6 +64,8 @@ function defaultData() {
     settings: { currency: "FCFA", tithe: 10, savings: 20, generosity: 5, living: 65 },
     spiritual: {},
     transactions: [],
+    agenda: [],
+    journal: {},
   };
 }
 let DATA = defaultData();
@@ -132,6 +134,7 @@ document.addEventListener("DOMContentLoaded", () => {
   setupCoordination();
   setupChecklistEditor();
   setupAdminManager();
+  setupAgenda();
 
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("sw.js").catch(() => {});
@@ -265,6 +268,7 @@ async function onAuthChanged(user) {
     renderFinancePanel();
     renderHistorique();
     renderDashboard();
+    renderAgendaPanel();
     setupSettingsValues();
     pushSummary();
   });
@@ -310,6 +314,7 @@ function goToTab(name) {
   if (name === "historique") renderHistorique();
   if (name === "accueil") renderDashboard();
   if (name === "coordination") renderCoordination();
+  if (name === "agenda") renderAgendaPanel();
   window.scrollTo({ top: 0, behavior: "instant" in window ? "instant" : "auto" });
 }
 function setupGotoLinks() {
@@ -570,9 +575,155 @@ function escapeAttr(s) {
 }
 
 /* ============================================================
+   AGENDA — bilan du jour, plan du lendemain, tâches/rendez-vous
+   ============================================================ */
+function setupAgenda() {
+  document.getElementById("saveJournalBtn").addEventListener("click", saveJournal);
+
+  document.getElementById("agendaAddForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const title = document.getElementById("agendaTitle").value.trim();
+    const date = document.getElementById("agendaDate").value;
+    const time = document.getElementById("agendaTime").value;
+    if (!title || !date) return;
+    addAgendaTask(title, date, time, "manual");
+    document.getElementById("agendaAddForm").reset();
+    renderAgendaPanel();
+    renderDashboard();
+  });
+
+  // Pré-remplit la date d'ajout rapide avec aujourd'hui
+  const dateInput = document.getElementById("agendaDate");
+  if (dateInput) dateInput.value = todayStr();
+}
+
+function addAgendaTask(title, date, time, source) {
+  DATA.agenda.push({
+    id: "ag_" + Date.now() + "_" + Math.random().toString(36).slice(2, 7),
+    title, date, time: time || "", done: false, source: source || "manual",
+  });
+  saveData();
+}
+
+function toggleAgendaTask(id, done) {
+  const t = DATA.agenda.find(a => a.id === id);
+  if (t) { t.done = done; saveData(); }
+}
+
+function deleteAgendaTask(id) {
+  DATA.agenda = DATA.agenda.filter(a => a.id !== id);
+  saveData();
+}
+
+function saveJournal() {
+  const bilan = document.getElementById("journalBilan").value.trim();
+  const planText = document.getElementById("journalPlan").value;
+  const today = todayStr();
+  const tomorrow = addDays(today, 1);
+
+  if (!DATA.journal[today]) DATA.journal[today] = {};
+  DATA.journal[today].bilan = bilan;
+
+  // Retire les tâches précédemment générées par le plan du même jour, pour éviter les doublons si on ré-enregistre
+  DATA.agenda = DATA.agenda.filter(a => a.planSourceDate !== today);
+
+  const lines = planText.split("\n").map(l => l.trim()).filter(l => l !== "");
+  lines.forEach(line => {
+    DATA.agenda.push({
+      id: "ag_" + Date.now() + "_" + Math.random().toString(36).slice(2, 7),
+      title: line, date: tomorrow, time: "", done: false, source: "plan", planSourceDate: today,
+    });
+  });
+
+  saveData();
+  const btn = document.getElementById("saveJournalBtn");
+  const original = btn.textContent;
+  btn.textContent = lines.length > 0 ? `Enregistré ✓ (${lines.length} tâche${lines.length > 1 ? "s" : ""} créée${lines.length > 1 ? "s" : ""} pour demain)` : "Enregistré ✓";
+  setTimeout(() => btn.textContent = original, 2200);
+  renderAgendaPanel();
+  renderDashboard();
+}
+
+function renderAgendaPanel() {
+  // Recharge le bilan/plan du jour déjà enregistrés (si on revient sur l'onglet)
+  const todayJournal = DATA.journal[todayStr()] || {};
+  document.getElementById("journalBilan").value = todayJournal.bilan || "";
+  const todayPlanTasks = DATA.agenda.filter(a => a.planSourceDate === todayStr());
+  document.getElementById("journalPlan").value = todayPlanTasks.map(a => a.title).join("\n");
+
+  const today = todayStr();
+  const late = DATA.agenda.filter(a => !a.done && a.date < today).sort((a,b) => a.date.localeCompare(b.date));
+  const todays = DATA.agenda.filter(a => a.date === today).sort((a,b) => (a.time||"99:99").localeCompare(b.time||"99:99"));
+  const upcoming = DATA.agenda.filter(a => !a.done && a.date > today).sort((a,b) => a.date.localeCompare(b.date) || (a.time||"").localeCompare(b.time||""));
+
+  renderAgendaList("agendaLate", "agendaLateEmpty", late, true);
+  renderAgendaList("agendaToday", "agendaTodayEmpty", todays, false);
+  renderAgendaList("agendaUpcoming", "agendaUpcomingEmpty", upcoming, false);
+}
+
+function renderAgendaList(wrapId, emptyId, list, markLate) {
+  const wrap = document.getElementById(wrapId);
+  const emptyEl = document.getElementById(emptyId);
+  wrap.innerHTML = "";
+  emptyEl.style.display = list.length === 0 ? "block" : "none";
+  list.forEach(t => {
+    const row = document.createElement("div");
+    row.className = "agenda-item" + (markLate ? " late" : "");
+    const dateLabel = t.date === todayStr() ? "" : fmtLong(t.date) + (t.time ? " · " : "");
+    row.innerHTML = `
+      <input type="checkbox" ${t.done ? "checked" : ""}>
+      <div class="agenda-item-body">
+        <div class="agenda-item-title ${t.done ? "done" : ""}">${escapeAttr(t.title)}</div>
+        <div class="agenda-item-meta">${dateLabel}${t.time || ""}</div>
+      </div>
+      <button type="button" class="agenda-del" title="Supprimer">🗑</button>
+    `;
+    row.querySelector('input[type="checkbox"]').addEventListener("change", (e) => {
+      toggleAgendaTask(t.id, e.target.checked);
+      renderAgendaPanel();
+      renderDashboard();
+    });
+    row.querySelector(".agenda-del").addEventListener("click", () => {
+      deleteAgendaTask(t.id);
+      renderAgendaPanel();
+      renderDashboard();
+    });
+    wrap.appendChild(row);
+  });
+}
+
+function renderReminderBanner() {
+  const wrap = document.getElementById("reminderBannerWrap");
+  if (!wrap) return;
+  const today = todayStr();
+  const now = new Date();
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+
+  const late = DATA.agenda.filter(a => !a.done && a.date < today);
+  const dueSoon = DATA.agenda.filter(a => !a.done && a.date === today && a.time && (timeToMinutes(a.time) - nowMinutes) <= 60 && (timeToMinutes(a.time) - nowMinutes) >= -180);
+  const todayNoTime = DATA.agenda.filter(a => !a.done && a.date === today && !a.time);
+
+  wrap.innerHTML = "";
+  if (late.length > 0) {
+    wrap.innerHTML += `<div class="reminder-banner">⏰ ${late.length} tâche${late.length > 1 ? "s" : ""} en retard — <button class="link-btn" data-goto="agenda" style="color:inherit;">voir l'agenda →</button></div>`;
+  } else if (dueSoon.length > 0) {
+    const t = dueSoon[0];
+    wrap.innerHTML += `<div class="reminder-banner">⏰ « ${escapeAttr(t.title)} » à ${t.time} — <button class="link-btn" data-goto="agenda" style="color:inherit;">voir l'agenda →</button></div>`;
+  } else if (todayNoTime.length > 0) {
+    wrap.innerHTML += `<div class="reminder-banner">📋 ${todayNoTime.length} tâche${todayNoTime.length > 1 ? "s" : ""} prévue${todayNoTime.length > 1 ? "s" : ""} aujourd'hui — <button class="link-btn" data-goto="agenda" style="color:inherit;">voir l'agenda →</button></div>`;
+  }
+  wrap.querySelectorAll("[data-goto]").forEach(btn => btn.addEventListener("click", () => goToTab(btn.dataset.goto)));
+}
+function timeToMinutes(hhmm) {
+  const [h, m] = hhmm.split(":").map(Number);
+  return h * 60 + m;
+}
+
+/* ============================================================
    TABLEAU DE BORD
    ============================================================ */
 function renderDashboard() {
+  renderReminderBanner();
   const pct = dayPercent(todayStr());
   document.getElementById("sealPct").textContent = `${pct}%`;
   const ring = document.getElementById("sealProgressRing");
@@ -833,7 +984,7 @@ function setupSettings() {
       DATA = defaultData();
       saveData();
       setupSettingsValues();
-      renderSpiritualPanel(); renderFinancePanel(); renderDashboard(); renderHistorique();
+      renderSpiritualPanel(); renderFinancePanel(); renderDashboard(); renderHistorique(); renderAgendaPanel();
     }
   });
 }
@@ -874,7 +1025,7 @@ function importData(e) {
       DATA = { ...defaultData(), ...parsed, settings: { ...defaultData().settings, ...(parsed.settings || {}) } };
       saveData();
       setupSettingsValues();
-      renderSpiritualPanel(); renderFinancePanel(); renderDashboard(); renderHistorique();
+      renderSpiritualPanel(); renderFinancePanel(); renderDashboard(); renderHistorique(); renderAgendaPanel();
     } catch (err) {
       alert("Ce fichier ne semble pas être un export valide d'ABBA Life.");
     }

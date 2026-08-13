@@ -73,6 +73,7 @@
     <button class="tab" data-tab="spirituel"><span class="tab-num">II</span>Spirituel</button>
     <button class="tab" data-tab="finance"><span class="tab-num">III</span>Finance</button>
     <button class="tab" data-tab="historique"><span class="tab-num">IV</span>Historique</button>
+    <button class="tab" data-tab="agenda"><span class="tab-num">VII</span>Agenda</button>
     <button class="tab admin-only" data-tab="coordination" id="tabCoordination" style="display:none;"><span class="tab-num">★</span>Coordination</button>
     <button class="tab" data-tab="apropos"><span class="tab-num">VI</span>Connaître ABBA</button>
     <button class="tab" data-tab="reglages"><span class="tab-num">V</span>Réglages</button>
@@ -82,6 +83,7 @@
 
     <!-- ================= ACCUEIL / DASHBOARD ================= -->
     <section class="panel active" id="panel-accueil">
+      <div id="reminderBannerWrap"></div>
       <div class="dash-grid">
 
         <div class="card seal-card">
@@ -203,6 +205,54 @@
       <div class="card">
         <p class="eyebrow">Évolution financière — 6 derniers mois</p>
         <div class="bars-chart" id="financeHistoryChart"></div>
+      </div>
+    </section>
+
+    <!-- ================= AGENDA ================= -->
+    <section class="panel" id="panel-agenda">
+      <div class="panel-head">
+        <h1>Agenda</h1>
+      </div>
+
+      <div class="card">
+        <p class="eyebrow">Bilan de ma journée</p>
+        <textarea id="journalBilan" class="text-input" rows="3" placeholder="Comment s'est passée ma journée ? Ce que j'ai accompli, ce qui a été difficile…" style="width:100%;resize:vertical;"></textarea>
+
+        <p class="eyebrow" style="margin-top:14px;">Ce que je veux faire demain</p>
+        <p class="settings-hint">Une chose par ligne — chaque ligne deviendra une tâche à cocher demain.</p>
+        <textarea id="journalPlan" class="text-input" rows="4" placeholder="Ex.&#10;Appeler le frère Michel&#10;Préparer l'enseignement du dimanche&#10;Rendre visite à sœur Ange" style="width:100%;resize:vertical;"></textarea>
+
+        <button class="btn-primary" id="saveJournalBtn" type="button" style="margin-top:10px;">Enregistrer mon bilan et mes tâches de demain</button>
+      </div>
+
+      <div class="card">
+        <p class="eyebrow">Ajouter une tâche ou un rendez-vous</p>
+        <form id="agendaAddForm" style="display:flex;flex-direction:column;gap:10px;">
+          <input type="text" id="agendaTitle" class="text-input" placeholder="Ex. Rendez-vous avec frère Paul" required>
+          <div style="display:flex;gap:8px;">
+            <input type="date" id="agendaDate" class="text-input" required style="flex:1;">
+            <input type="time" id="agendaTime" class="text-input" style="flex:1;">
+          </div>
+          <button class="btn-primary" type="submit">Ajouter à l'agenda</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <p class="eyebrow">En retard</p>
+        <div id="agendaLate"></div>
+        <p class="empty-hint" id="agendaLateEmpty">Rien en retard.</p>
+      </div>
+
+      <div class="card">
+        <p class="eyebrow">Aujourd'hui</p>
+        <div id="agendaToday"></div>
+        <p class="empty-hint" id="agendaTodayEmpty">Rien de prévu aujourd'hui.</p>
+      </div>
+
+      <div class="card">
+        <p class="eyebrow">À venir</p>
+        <div id="agendaUpcoming"></div>
+        <p class="empty-hint" id="agendaUpcomingEmpty">Rien de prévu pour l'instant.</p>
       </div>
     </section>
 
@@ -335,6 +385,10 @@
     <button class="bnav-btn" data-tab="historique">
       <svg viewBox="0 0 24 24" width="20" height="20"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12 7 V12 L16 14" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
       <span>Historique</span>
+    </button>
+    <button class="bnav-btn" data-tab="agenda">
+      <svg viewBox="0 0 24 24" width="20" height="20"><rect x="4" y="5" width="16" height="15" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M4 9.5 H20 M8 3 V6.5 M16 3 V6.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M8 13 L11 16 L16.5 10.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>Agenda</span>
     </button>
     <button class="bnav-btn admin-only" data-tab="coordination" id="bnavCoordination" style="display:none;">
       <svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 2 L14.5 9 L22 9 L16 13.5 L18 21 L12 16.5 L6 21 L8 13.5 L2 9 L9.5 9 Z" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>
