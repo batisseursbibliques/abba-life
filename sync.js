@@ -8,7 +8,7 @@ import {
   onAuthStateChanged, signOut, updateProfile,
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {
-  getFirestore, doc, setDoc, onSnapshot, serverTimestamp,
+  getFirestore, doc, setDoc, deleteDoc, onSnapshot, serverTimestamp,
   enableIndexedDbPersistence, collection, getDocs,
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { firebaseConfig, ADMIN_EMAILS } from "./firebase-config.js";
@@ -69,10 +69,30 @@ async function saveChecklist(categories) {
   await setDoc(doc(db, "config", "checklist"), { categories, updatedAt: serverTimestamp() });
 }
 
+/* ---------- COORDINATEURS (liste modifiable depuis l'app) ---------- */
+function watchAdmins(callback) {
+  return onSnapshot(collection(db, "admins"), (snap) => {
+    callback(snap.docs.map(d => d.id));
+  }, (err) => console.error("watchAdmins:", err));
+}
+async function addAdmin(email, addedByEmail) {
+  const id = email.trim().toLowerCase();
+  await setDoc(doc(db, "admins", id), { addedBy: addedByEmail, addedAt: serverTimestamp() });
+}
+async function removeAdmin(email) {
+  const id = email.trim().toLowerCase();
+  await deleteDoc(doc(db, "admins", id));
+}
+async function ensureAdminSeed(email) {
+  const id = email.trim().toLowerCase();
+  await setDoc(doc(db, "admins", id), { addedBy: "bootstrap", addedAt: serverTimestamp() }, { merge: true });
+}
+
 window.AbbaSync = {
   isAdminEmail,
   signUp, logIn, logOut, watchAuth,
   watchUserData, saveUserData,
   saveSummary, loadAllSummaries,
   watchChecklist, saveChecklist,
+  watchAdmins, addAdmin, removeAdmin, ensureAdminSeed,
 };
