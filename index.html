@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ABBA Life — Carnet du Bâtisseur</title>
+<meta name="description" content="Suivi spirituel et financier quotidien, simple et gratuit.">
+<meta name="theme-color" content="#1F3B57">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="logo.png" type="image/png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ===== ÉCRAN DE CONNEXION ===== -->
+<div class="auth-screen" id="authScreen">
+  <div class="auth-box">
+    <img src="logo.png" alt="Logo ABBA" class="auth-logo">
+    <h1>ABBA Life</h1>
+    <p class="auth-sub">Carnet du Bâtisseur</p>
+
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="authTabLogin" type="button">Se connecter</button>
+      <button class="auth-tab" id="authTabSignup" type="button">Créer un compte</button>
+    </div>
+
+    <form id="loginForm" class="auth-form">
+      <label class="field"><span>E-mail</span><input type="email" id="loginEmail" required autocomplete="email"></label>
+      <label class="field"><span>Mot de passe</span><input type="password" id="loginPassword" required autocomplete="current-password"></label>
+      <p class="auth-error" id="loginError"></p>
+      <button type="submit" class="btn-primary full">Se connecter</button>
+    </form>
+
+    <form id="signupForm" class="auth-form" style="display:none;">
+      <label class="field"><span>Nom complet</span><input type="text" id="signupNom" required autocomplete="name"></label>
+      <label class="field"><span>E-mail</span><input type="email" id="signupEmail" required autocomplete="email"></label>
+      <label class="field"><span>Mot de passe (6 caractères min.)</span><input type="password" id="signupPassword" required minlength="6" autocomplete="new-password"></label>
+      <p class="auth-error" id="signupError"></p>
+      <button type="submit" class="btn-primary full">Créer mon compte</button>
+    </form>
+
+    <p class="auth-hint">Tes données sont sauvegardées automatiquement et retrouvables sur n'importe quel appareil, en te reconnectant avec ce compte.</p>
+  </div>
+</div>
+
+<div class="app" id="app" style="display:none;">
+
+  <!-- ===== EN-TÊTE ===== -->
+  <header class="topbar">
+    <div class="brand">
+      <img src="logo.png" alt="Logo ABBA" class="brand-logo">
+      <div class="brand-text">
+        <span class="brand-name">ABBA Life</span>
+        <span class="brand-sub">Carnet du Bâtisseur</span>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-date" id="topbarDate"></div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Changer d'apparence">
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5Z"/></svg>
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.4M12 19.1v2.4M4.6 4.6l1.7 1.7M17.7 17.7l1.7 1.7M2.5 12h2.4M19.1 12h2.4M4.6 19.4l1.7-1.7M17.7 6.3l1.7-1.7"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- ===== NAVIGATION ===== -->
+  <nav class="tabs" id="tabs" aria-label="Navigation principale">
+    <button class="tab active" data-tab="accueil"><span class="tab-num">I</span>Aujourd'hui</button>
+    <button class="tab" data-tab="spirituel"><span class="tab-num">II</span>Spirituel</button>
+    <button class="tab" data-tab="finance"><span class="tab-num">III</span>Finance</button>
+    <button class="tab" data-tab="historique"><span class="tab-num">IV</span>Historique</button>
+    <button class="tab admin-only" data-tab="coordination" id="tabCoordination" style="display:none;"><span class="tab-num">★</span>Coordination</button>
+    <button class="tab" data-tab="apropos"><span class="tab-num">VI</span>Connaître ABBA</button>
+    <button class="tab" data-tab="reglages"><span class="tab-num">V</span>Réglages</button>
+  </nav>
+
+  <main class="content">
+
+    <!-- ================= ACCUEIL / DASHBOARD ================= -->
+    <section class="panel active" id="panel-accueil">
+      <div class="dash-grid">
+
+        <div class="card seal-card">
+          <div class="seal" id="spiritualSeal">
+            <svg viewBox="0 0 120 120" width="120" height="120">
+              <circle cx="60" cy="60" r="52" class="seal-track"/>
+              <circle cx="60" cy="60" r="52" class="seal-progress" id="sealProgressRing"/>
+            </svg>
+            <div class="seal-center">
+              <span class="seal-pct" id="sealPct">0%</span>
+              <span class="seal-label">aujourd'hui</span>
+            </div>
+          </div>
+          <p class="card-caption">Discipline spirituelle du jour</p>
+          <button class="link-btn" data-goto="spirituel">Ouvrir la checklist →</button>
+        </div>
+
+        <div class="card ledger-card">
+          <p class="eyebrow">Ce mois-ci</p>
+          <div class="ledger-row">
+            <span>Revenus</span>
+            <span class="num" id="dashRevenus">0</span>
+          </div>
+          <div class="ledger-row">
+            <span>Dépenses</span>
+            <span class="num" id="dashDepenses">0</span>
+          </div>
+          <div class="ledger-row total">
+            <span>Solde</span>
+            <span class="num" id="dashSolde">0</span>
+          </div>
+          <div class="tithe-strip">
+            <span>Dîme du mois</span>
+            <span class="num" id="dashTithe">0 / 0</span>
+          </div>
+          <button class="link-btn" data-goto="finance">Ouvrir les finances →</button>
+        </div>
+
+        <div class="card week-card">
+          <p class="eyebrow">7 derniers jours — fidélité spirituelle</p>
+          <div class="week-strip" id="weekStrip"></div>
+        </div>
+
+        <div class="card verse-card">
+          <p class="verse-text">« Que celui qui a été fidèle dans très peu de chose soit reconnu fidèle dans beaucoup. »</p>
+          <p class="verse-ref">Luc 16:10</p>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ================= SPIRITUEL ================= -->
+    <section class="panel" id="panel-spirituel">
+      <div class="panel-head">
+        <h1>Checklist spirituelle</h1>
+        <div class="date-nav">
+          <button id="spiritPrevDay" aria-label="Jour précédent">‹</button>
+          <span id="spiritCurrentDate"></span>
+          <button id="spiritNextDay" aria-label="Jour suivant">›</button>
+        </div>
+      </div>
+
+      <div class="categories" id="spiritualCategories"></div>
+    </section>
+
+    <!-- ================= FINANCE ================= -->
+    <section class="panel" id="panel-finance">
+      <div class="panel-head">
+        <h1>Suivi financier</h1>
+        <button class="btn-primary" id="openTxModal">+ Mouvement</button>
+      </div>
+
+      <div class="budget-block">
+        <p class="eyebrow">Répartition du mois (sur les revenus saisis)</p>
+        <div class="budget-bars" id="budgetBars"></div>
+      </div>
+
+      <div class="finance-grid">
+        <div class="card ledger-card">
+          <div class="ledger-row"><span>Revenus du mois</span><span class="num" id="finRevenus">0</span></div>
+          <div class="ledger-row"><span>Dépenses du mois</span><span class="num" id="finDepenses">0</span></div>
+          <div class="ledger-row total"><span>Solde</span><span class="num" id="finSolde">0</span></div>
+        </div>
+        <div class="card ledger-card">
+          <div class="ledger-row"><span>Dîme due (10%… ou taux choisi)</span><span class="num" id="finTitheDue">0</span></div>
+          <div class="ledger-row"><span>Dîme donnée</span><span class="num" id="finTitheGiven">0</span></div>
+          <div class="ledger-row total"><span>Écart</span><span class="num" id="finTitheGap">0</span></div>
+        </div>
+      </div>
+
+      <div class="tx-list-wrap">
+        <p class="eyebrow">Mouvements du mois</p>
+        <div class="month-nav">
+          <button id="finPrevMonth" aria-label="Mois précédent">‹</button>
+          <span id="finCurrentMonth"></span>
+          <button id="finNextMonth" aria-label="Mois suivant">›</button>
+        </div>
+        <table class="tx-table">
+          <thead>
+            <tr><th>Date</th><th>Catégorie</th><th>Note</th><th class="right">Montant</th><th></th></tr>
+          </thead>
+          <tbody id="txTableBody"></tbody>
+        </table>
+        <p class="empty-hint" id="txEmptyHint">Aucun mouvement ce mois-ci. Ajoute ton premier revenu ou dépense.</p>
+      </div>
+    </section>
+
+    <!-- ================= HISTORIQUE ================= -->
+    <section class="panel" id="panel-historique">
+      <div class="panel-head">
+        <h1>Historique</h1>
+      </div>
+
+      <div class="card">
+        <p class="eyebrow">Régularité spirituelle — 5 dernières semaines</p>
+        <div class="calendar-grid" id="historyCalendar"></div>
+      </div>
+
+      <div class="card">
+        <p class="eyebrow">Évolution financière — 6 derniers mois</p>
+        <div class="bars-chart" id="financeHistoryChart"></div>
+      </div>
+    </section>
+
+    <!-- ================= COORDINATION (coordinateurs) ================= -->
+    <section class="panel" id="panel-coordination">
+      <div class="panel-head">
+        <h1>Coordination</h1>
+        <button class="btn-secondary" id="refreshCoordination">Actualiser</button>
+      </div>
+      <p class="settings-hint">Régularité spirituelle des Bâtisseurs (7 derniers jours). Les données financières restent privées à chacun.</p>
+      <div class="card">
+        <table class="tx-table" id="coordTable">
+          <thead><tr><th>Bâtisseur</th><th>Aujourd'hui</th><th>7 jours</th><th>Série</th></tr></thead>
+          <tbody id="coordTableBody"></tbody>
+        </table>
+        <p class="empty-hint" id="coordEmptyHint">Aucun Bâtisseur pour l'instant.</p>
+      </div>
+    </section>
+
+    <!-- ================= CONNAÎTRE ABBA ================= -->
+    <section class="panel" id="panel-apropos">
+      <div class="about-hero">
+        <img src="logo.png" alt="Logo ABBA">
+        <h1>ABBA</h1>
+        <p class="tagline">Alliance des Bâtisseurs Bibliques en Action</p>
+      </div>
+
+      <div class="card about-text">
+        <p>ABBA est une organisation chrétienne qui forme des bâtisseurs : des hommes et des femmes enracinés dans la Parole, disciplinés dans leur vie spirituelle et responsables dans leur gestion, pour impacter durablement leur famille, leur église et leur nation.</p>
+        <p>Le <strong>Parcours Bâtisseur</strong> est le programme de formation d'ABBA : un cheminement progressif par modules qui aide chaque participant à grandir dans sa foi, ses disciplines quotidiennes et son témoignage — exactement ce que cette application t'aide à suivre chaque jour.</p>
+      </div>
+
+      <div class="card">
+        <p class="eyebrow">Rejoindre ABBA</p>
+        <div class="about-actions">
+          <a class="about-btn whatsapp" href="https://wa.me/22941314051" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.6 6.3A8.9 8.9 0 0 0 12.1 3 8.9 8.9 0 0 0 3.6 15.3L2 21l5.9-1.5a8.9 8.9 0 0 0 4.2 1.1h0a8.9 8.9 0 0 0 8.9-8.9 8.9 8.9 0 0 0-2.6-6.3ZM12.1 19c-1.3 0-2.6-.3-3.7-1l-.3-.1-3.5.9.9-3.4-.2-.3a7.4 7.4 0 0 1 12.7-7.9 7.4 7.4 0 0 1-5.9 12Zm4-5.5c-.2-.1-1.3-.6-1.5-.7-.2-.1-.3-.1-.5.1-.1.2-.5.7-.6.8-.1.1-.2.1-.4 0-.2-.1-.9-.3-1.7-1a6.3 6.3 0 0 1-1.2-1.5c-.1-.2 0-.3.1-.4l.3-.4.2-.3v-.3c0-.1-.5-1.2-.7-1.6-.2-.4-.4-.4-.5-.4h-.4c-.2 0-.4.1-.6.3-.2.2-.8.8-.8 1.9s.8 2.2 1 2.4c.1.1 1.6 2.5 4 3.5.6.2 1 .4 1.3.5.6.2 1 .1 1.4-.1.4-.2 1.3-.5 1.5-1 .2-.5.2-.9.1-1l-.4-.2Z"/></svg>
+            S'inscrire sur WhatsApp
+          </a>
+          <a class="about-btn website" href="https://batisseursbibliques.org" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>
+            En savoir plus sur le site ABBA
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= RÉGLAGES ================= -->
+    <section class="panel" id="panel-reglages">
+      <div class="panel-head"><h1>Réglages</h1></div>
+
+      <div class="card settings-card">
+        <p class="eyebrow">Devise</p>
+        <input type="text" id="settingCurrency" maxlength="6" class="text-input small">
+      </div>
+
+      <div class="card settings-card">
+        <p class="eyebrow">Répartition biblique du budget (%)</p>
+        <p class="settings-hint">La somme doit faire 100%.</p>
+        <div class="settings-grid">
+          <label>Dîme <input type="number" id="settingTithe" min="0" max="100"></label>
+          <label>Épargne <input type="number" id="settingSavings" min="0" max="100"></label>
+          <label>Générosité <input type="number" id="settingGenerosity" min="0" max="100"></label>
+          <label>Vie courante <input type="number" id="settingLiving" min="0" max="100"></label>
+        </div>
+        <p class="settings-sum" id="settingsSum"></p>
+        <button class="btn-primary" id="saveSettings">Enregistrer</button>
+      </div>
+
+      <div class="card settings-card admin-only" id="checklistEditorCard" style="display:none;">
+        <p class="eyebrow">Checklist spirituelle (visible par tous les Bâtisseurs)</p>
+        <p class="settings-hint">Modifie les catégories et les éléments à cocher chaque jour. Enregistré ici, ça se met à jour pour tout le monde.</p>
+        <div id="checklistEditor"></div>
+        <button class="btn-secondary" id="addChecklistCategory" type="button">+ Ajouter une catégorie</button>
+        <button class="btn-primary" id="saveChecklistBtn" type="button" style="margin-top:10px;">Enregistrer la checklist</button>
+      </div>
+
+      <div class="card settings-card">
+        <p class="eyebrow">Mon compte</p>
+        <p class="settings-hint" id="accountEmailHint"></p>
+        <button class="btn-secondary" id="logoutBtn">Se déconnecter</button>
+      </div>
+
+      <div class="card settings-card">
+        <p class="eyebrow">Mes données</p>
+        <p class="settings-hint">Tes données restent sur cet appareil uniquement. Exporte-les régulièrement pour ne pas les perdre si tu changes de téléphone.</p>
+        <div class="settings-actions">
+          <button class="btn-secondary" id="exportData">Exporter mes données</button>
+          <label class="btn-secondary file-btn">
+            Importer un fichier
+            <input type="file" id="importData" accept="application/json" hidden>
+          </label>
+        </div>
+        <button class="btn-danger" id="resetData">Réinitialiser toutes les données</button>
+      </div>
+
+      <p class="settings-footer">ABBA Life v1.0 — Alliance des Bâtisseurs Bibliques en Action</p>
+    </section>
+
+  </main>
+
+  <!-- ===== NAV MOBILE BASSE ===== -->
+  <nav class="bottom-nav" aria-hidden="true">
+    <button class="bnav-btn active" data-tab="accueil">
+      <svg viewBox="0 0 24 24" width="20" height="20"><path d="M4 11 L12 4 L20 11 M6 10 V20 H18 V10" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+      <span>Aujourd'hui</span>
+    </button>
+    <button class="bnav-btn" data-tab="spirituel">
+      <svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 3 L12 21 M6 7 Q12 3 18 7" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+      <span>Spirituel</span>
+    </button>
+    <button class="bnav-btn" data-tab="finance">
+      <svg viewBox="0 0 24 24" width="20" height="20"><rect x="4" y="8" width="16" height="11" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 8 V6 Q8 3 12 3 Q16 3 16 6 V8" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+      <span>Finance</span>
+    </button>
+    <button class="bnav-btn" data-tab="historique">
+      <svg viewBox="0 0 24 24" width="20" height="20"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12 7 V12 L16 14" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+      <span>Historique</span>
+    </button>
+    <button class="bnav-btn admin-only" data-tab="coordination" id="bnavCoordination" style="display:none;">
+      <svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 2 L14.5 9 L22 9 L16 13.5 L18 21 L12 16.5 L6 21 L8 13.5 L2 9 L9.5 9 Z" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>
+      <span>Coord.</span>
+    </button>
+    <button class="bnav-btn" data-tab="apropos">
+      <svg viewBox="0 0 24 24" width="20" height="20"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12 8 V13 M12 16 V16.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      <span>ABBA</span>
+    </button>
+    <button class="bnav-btn" data-tab="reglages">
+      <svg viewBox="0 0 24 24" width="20" height="20"><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12 3 V6 M12 18 V21 M3 12 H6 M18 12 H21 M5.6 5.6 L7.8 7.8 M16.2 16.2 L18.4 18.4 M18.4 5.6 L16.2 7.8 M7.8 16.2 L5.6 18.4" stroke="currentColor" stroke-width="1.6"/></svg>
+      <span>Réglages</span>
+    </button>
+  </nav>
+
+</div>
+
+<!-- ===== MODALE : NOUVEAU MOUVEMENT ===== -->
+<div class="modal-overlay" id="txModalOverlay">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="txModalTitle">
+    <div class="modal-head">
+      <h2 id="txModalTitle">Nouveau mouvement</h2>
+      <button class="modal-close" id="closeTxModal" aria-label="Fermer">×</button>
+    </div>
+    <form id="txForm">
+      <div class="segmented" id="txTypeSegmented">
+        <button type="button" class="seg active" data-type="revenu">Revenu</button>
+        <button type="button" class="seg" data-type="depense">Dépense</button>
+      </div>
+
+      <label class="field">
+        <span>Montant</span>
+        <input type="number" id="txAmount" min="0" step="1" required inputmode="decimal">
+      </label>
+
+      <label class="field">
+        <span>Catégorie</span>
+        <select id="txCategory"></select>
+      </label>
+
+      <label class="field">
+        <span>Date</span>
+        <input type="date" id="txDate" required>
+      </label>
+
+      <label class="field">
+        <span>Note (optionnel)</span>
+        <input type="text" id="txNote" maxlength="80" placeholder="Ex: Salaire du mois, Marché, Dîme dominicale…">
+      </label>
+
+      <button type="submit" class="btn-primary full">Enregistrer</button>
+    </form>
+  </div>
+</div>
+
+<script type="module" src="sync.js"></script>
+<script type="module" src="app.js"></script>
+</body>
+</html>
