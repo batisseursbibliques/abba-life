@@ -215,35 +215,6 @@
       </div>
 
       <div class="card">
-        <p class="eyebrow">Bilan de ma journée</p>
-        <textarea id="journalBilan" class="text-input" rows="3" placeholder="Comment s'est passée ma journée ? Ce que j'ai accompli, ce qui a été difficile…" style="width:100%;resize:vertical;"></textarea>
-
-        <p class="eyebrow" style="margin-top:14px;">Ce que je veux faire demain</p>
-        <p class="settings-hint">Une chose par ligne — chaque ligne deviendra une tâche à cocher demain.</p>
-        <textarea id="journalPlan" class="text-input" rows="4" placeholder="Ex.&#10;Appeler le frère Michel&#10;Préparer l'enseignement du dimanche&#10;Rendre visite à sœur Ange" style="width:100%;resize:vertical;"></textarea>
-
-        <button class="btn-primary" id="saveJournalBtn" type="button" style="margin-top:10px;">Enregistrer mon bilan et mes tâches de demain</button>
-      </div>
-
-      <div class="card">
-        <p class="eyebrow">Mes bilans récents</p>
-        <div id="journalHistoryList"></div>
-        <p class="empty-hint" id="journalHistoryEmpty">Aucun bilan enregistré pour l'instant.</p>
-      </div>
-
-      <div class="card">
-        <p class="eyebrow">Ajouter une tâche ou un rendez-vous</p>
-        <form id="agendaAddForm" style="display:flex;flex-direction:column;gap:10px;">
-          <input type="text" id="agendaTitle" class="text-input" placeholder="Ex. Rendez-vous avec frère Paul" required>
-          <div style="display:flex;gap:8px;">
-            <input type="date" id="agendaDate" class="text-input" required style="flex:1;">
-            <input type="time" id="agendaTime" class="text-input" style="flex:1;">
-          </div>
-          <button class="btn-primary" type="submit">Ajouter à l'agenda</button>
-        </form>
-      </div>
-
-      <div class="card">
         <p class="eyebrow">En retard</p>
         <div id="agendaLate"></div>
         <p class="empty-hint" id="agendaLateEmpty">Rien en retard.</p>
@@ -259,6 +230,35 @@
         <p class="eyebrow">À venir</p>
         <div id="agendaUpcoming"></div>
         <p class="empty-hint" id="agendaUpcomingEmpty">Rien de prévu pour l'instant.</p>
+      </div>
+
+      <div class="card">
+        <p class="eyebrow">Ajouter une tâche ou un rendez-vous</p>
+        <form id="agendaAddForm" style="display:flex;flex-direction:column;gap:10px;">
+          <input type="text" id="agendaTitle" class="text-input" placeholder="Ex. Rendez-vous avec frère Paul" required>
+          <div style="display:flex;gap:8px;">
+            <input type="date" id="agendaDate" class="text-input" required style="flex:1;">
+            <input type="time" id="agendaTime" class="text-input" style="flex:1;">
+          </div>
+          <button class="btn-primary" type="submit">Ajouter à l'agenda</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <p class="eyebrow">Bilan de ma journée</p>
+        <textarea id="journalBilan" class="text-input" rows="3" placeholder="Comment s'est passée ma journée ? Ce que j'ai accompli, ce qui a été difficile…" style="width:100%;resize:vertical;"></textarea>
+
+        <p class="eyebrow" style="margin-top:14px;">Ce que je veux faire demain</p>
+        <p class="settings-hint">Une chose par ligne — chaque ligne deviendra une tâche à cocher demain.</p>
+        <textarea id="journalPlan" class="text-input" rows="4" placeholder="Ex.&#10;Appeler le frère Michel&#10;Préparer l'enseignement du dimanche&#10;Rendre visite à sœur Ange" style="width:100%;resize:vertical;"></textarea>
+
+        <button class="btn-primary" id="saveJournalBtn" type="button" style="margin-top:10px;">Enregistrer mon bilan et mes tâches de demain</button>
+      </div>
+
+      <div class="card">
+        <p class="eyebrow">Mes bilans récents</p>
+        <div id="journalHistoryList"></div>
+        <p class="empty-hint" id="journalHistoryEmpty">Aucun bilan enregistré pour l'instant.</p>
       </div>
     </section>
 
