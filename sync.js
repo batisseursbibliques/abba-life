@@ -87,4 +87,90 @@ async function deleteAllMonths(uid) {
 }
 
 /* ---------- MIGRATION AUTOMATIQUE depuis l'ancien format (un seul gros document) ----------
-   S'exécute une seule fois par compte, de façon transparente, à la première connex
+   S'exécute une seule fois par compte, de façon transparente, à la première connexion
+   après cette mise à jour. Répartit les anciennes données par mois. */
+async function migrateLegacyIfNeeded(uid) {
+  const migFlagRef = doc(db, "users", uid, "priv", "migrated");
+  const migFlagSnap = await getDoc(migFlagRef);
+  if (migFlagSnap.exists()) return; // déjà migré
+
+  const legacyRef = doc(db, "users", uid, "priv", "main");
+  const legacySnap = await getDoc(legacyRef);
+  if (!legacySnap.exists()) {
+    await setDoc(migFlagRef, { done: true, at: serverTimestamp() });
+    return; // nouveau compte, rien à migrer
+  }
+
+  const legacy = legacySnap.data() || {};
+  const monthBuckets = {}; // { "2026-08": { spiritual:{}, journal:{}, transactions:[] } }
+  function bucket(monthKey) {
+    if (!monthBuckets[monthKey]) monthBuckets[monthKey] = { spiritual: {}, journal: {}, transactions: [] };
+    return monthBuckets[monthKey];
+  }
+
+  Object.entries(legacy.spiritual || {}).forEach(([date, val]) => {
+    bucket(date.slice(0, 7)).spiritual[date] = val;
+  });
+  Object.entries(legacy.journal || {}).forEach(([date, val]) => {
+    bucket(date.slice(0, 7)).journal[date] = val;
+  });
+  (legacy.transactions || []).forEach((tx) => {
+    bucket((tx.date || "").slice(0, 7) || "sans-date").transactions.push(tx);
+  });
+
+  const writes = Object.entries(monthBuckets).map(([monthKey, data]) => saveMonth(uid, monthKey, data));
+  if (legacy.settings) writes.push(saveSettings(uid, legacy.settings));
+  if (legacy.agenda) writes.push(saveAgenda(uid, legacy.agenda));
+  await Promise.all(writes);
+  await setDoc(migFlagRef, { done: true, at: serverTimestamp() });
+}
+
+/* ---------- RÉSUMÉ POUR LES COORDINATEURS ---------- */
+async function saveSummary(uid, summary) {
+  await setDoc(doc(db, "summaries", uid), { ...summary, updatedAt: serverTimestamp() }, { merge: true });
+}
+async function loadAllSummaries() {
+  const snap = await getDocs(collection(db, "summaries"));
+  return snap.docs.map(d => ({ uid: d.id, ...d.data() }));
+}
+
+/* ---------- CHECKLIST SPIRITUELLE PARTAGÉE ---------- */
+function watchChecklist(callback) {
+  return onSnapshot(doc(db, "config", "checklist"), (snap) => {
+    callback(snap.exists() ? snap.data().categories : null);
+  }, (err) => console.error("watchChecklist:", err));
+}
+async function saveChecklist(categories) {
+  await setDoc(doc(db, "config", "checklist"), { categories, updatedAt: serverTimestamp() });
+}
+
+/* ---------- COORDINATEURS (liste modifiable depuis l'app) ---------- */
+function watchAdmins(callback) {
+  return onSnapshot(collection(db, "admins"), (snap) => {
+    callback(snap.docs.map(d => d.id));
+  }, (err) => console.error("watchAdmins:", err));
+}
+async function addAdmin(email, addedByEmail) {
+  const id = email.trim().toLowerCase();
+  await setDoc(doc(db, "admins", id), { addedBy: addedByEmail, addedAt: serverTimestamp() });
+}
+async function removeAdmin(email) {
+  const id = email.trim().toLowerCase();
+  await deleteDoc(doc(db, "admins", id));
+}
+async function ensureAdminSeed(email) {
+  const id = email.trim().toLowerCase();
+  await setDoc(doc(db, "admins", id), { addedBy: "bootstrap", addedAt: serverTimestamp() }, { merge: true });
+}
+
+window.AbbaSync = {
+  isAdminEmail,
+  signUp, logIn, logOut, watchAuth,
+  watchSettings, saveSettings,
+  watchAgenda, saveAgenda,
+  watchMonth, getMonthOnce, saveMonth, loadAllMonths, deleteAllMonths,
+  migrateLegacyIfNeeded,
+  saveSummary, loadAllSummaries,
+  watchChecklist, saveChecklist,
+  watchAdmins, addAdmin, removeAdmin, ensureAdminSeed,
+};
