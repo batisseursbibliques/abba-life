@@ -196,7 +196,10 @@ document.addEventListener("DOMContentLoaded", () => {
   setupAgenda();
 
   if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("sw.js").catch(() => {});
+    navigator.serviceWorker.register("sw.js", { updateViaCache: "none" }).then((reg) => {
+      // Vérifie activement s'il y a une nouvelle version à chaque ouverture de l'app
+      reg.update().catch(() => {});
+    }).catch(() => {});
   }
 
   // Démarre l'écoute de l'état de connexion (voir sync.js)
