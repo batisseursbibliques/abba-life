@@ -72,10 +72,75 @@ let DATA = defaultData();
 let CURRENT_USER = null;
 let IS_ADMIN = false;
 let ADMIN_LIST = [];
-let unsubUserData = null;
+let unsubSettings = null;
+let unsubAgenda = null;
+let unsubCurrentMonth = null;
 let unsubChecklist = null;
 let unsubAdmins = null;
-let suppressCloudWrite = false; // évite de renvoyer vers Firestore ce qu'on vient de recevoir de Firestore
+
+// Chaque mois (AAAA-MM) de spirituel/bilans/finance vit dans son propre petit document
+// côté serveur — ça évite qu'un seul fichier grossisse indéfiniment au fil des années.
+let MONTHS_CACHE = {};   // { "2026-08": { spiritual:{}, journal:{}, transactions:[] } }
+let LOADED_MONTHS = new Set();
+let CURRENT_MONTH_KEY = null; // le mois en cours, toujours synchronisé en direct
+
+function monthKeyOf(dateStr) { return (dateStr || "").slice(0, 7); }
+function emptyMonthBucket() { return { spiritual: {}, journal: {}, transactions: [] }; }
+function rebuildCombinedData() {
+  DATA.spiritual = {};
+  DATA.journal = {};
+  DATA.transactions = [];
+  Object.values(MONTHS_CACHE).forEach((m) => {
+    Object.assign(DATA.spiritual, m.spiritual || {});
+    Object.assign(DATA.journal, m.journal || {});
+    DATA.transactions.push(...(m.transactions || []));
+  });
+  saveLocalCache(); // copie hors-ligne complète, pratique mais jamais utilisée pour les écritures cloud
+}
+
+// Charge un mois précis une seule fois (lecture ponctuelle) — utilisé quand on navigue
+// vers un mois passé (Historique, navigation Finance/Spirituel).
+async function ensureMonthLoaded(monthKey) {
+  if (LOADED_MONTHS.has(monthKey) || !CURRENT_USER) return;
+  LOADED_MONTHS.add(monthKey);
+  try {
+    const data = await window.AbbaSync.getMonthOnce(CURRENT_USER.uid, monthKey);
+    MONTHS_CACHE[monthKey] = data
+      ? { spiritual: data.spiritual || {}, journal: data.journal || {}, transactions: data.transactions || [] }
+      : emptyMonthBucket();
+    rebuildCombinedData();
+  } catch (err) {
+    console.error("Chargement du mois", monthKey, err);
+  }
+}
+// Charge plusieurs mois d'un coup (utilisé par l'Historique) puis rafraîchit l'affichage une seule fois
+async function ensureMonthsLoaded(monthKeys, thenRender) {
+  await Promise.all(monthKeys.map(ensureMonthLoaded));
+  if (thenRender) thenRender();
+}
+
+function saveMonthData(monthKey) {
+  if (!MONTHS_CACHE[monthKey]) MONTHS_CACHE[monthKey] = emptyMonthBucket();
+  rebuildCombinedData();
+  if (CURRENT_USER) {
+    window.AbbaSync.saveMonth(CURRENT_USER.uid, monthKey, MONTHS_CACHE[monthKey])
+      .catch(err => console.error("Sauvegarde du mois", monthKey, err));
+  }
+}
+function saveSettingsData() {
+  saveLocalCache();
+  if (CURRENT_USER) {
+    window.AbbaSync.saveSettings(CURRENT_USER.uid, DATA.settings)
+      .catch(err => console.error("Sauvegarde des réglages :", err));
+  }
+}
+function saveAgendaData() {
+  saveLocalCache();
+  if (CURRENT_USER) {
+    window.AbbaSync.saveAgenda(CURRENT_USER.uid, DATA.agenda)
+      .catch(err => console.error("Sauvegarde de l'agenda :", err));
+  }
+}
 
 function loadLocalCache() {
   try {
@@ -89,12 +154,6 @@ function loadLocalCache() {
 }
 function saveLocalCache() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(DATA));
-}
-function saveData() {
-  saveLocalCache();
-  if (CURRENT_USER && !suppressCloudWrite) {
-    window.AbbaSync.saveUserData(CURRENT_USER.uid, DATA).catch(err => console.error("Sauvegarde cloud impossible :", err));
-  }
 }
 
 /* ---------- Utilitaires date ---------- */
@@ -200,7 +259,9 @@ function traduireErreurAuth(err) {
 
 async function onAuthChanged(user) {
   // On coupe les anciens écouteurs à chaque changement de compte
-  if (unsubUserData) { unsubUserData(); unsubUserData = null; }
+  if (unsubSettings) { unsubSettings(); unsubSettings = null; }
+  if (unsubAgenda) { unsubAgenda(); unsubAgenda = null; }
+  if (unsubCurrentMonth) { unsubCurrentMonth(); unsubCurrentMonth = null; }
   if (unsubChecklist) { unsubChecklist(); unsubChecklist = null; }
   if (unsubAdmins) { unsubAdmins(); unsubAdmins = null; }
 
@@ -208,6 +269,8 @@ async function onAuthChanged(user) {
     CURRENT_USER = null;
     IS_ADMIN = false;
     ADMIN_LIST = [];
+    MONTHS_CACHE = {};
+    LOADED_MONTHS = new Set();
     document.getElementById("authScreen").style.display = "flex";
     document.getElementById("app").style.display = "none";
     return;
@@ -241,36 +304,54 @@ async function onAuthChanged(user) {
     renderHistorique();
     renderChecklistEditor();
   });
-  // Si aucune checklist n'existe encore côté serveur et qu'on est admin, on l'initialise avec la valeur par défaut
-  if (IS_ADMIN) {
-    // laisse le premier onSnapshot arriver ; s'il est vide, on proposera "Enregistrer" pour créer le document
+
+  // Migration transparente et unique depuis l'ancien format (un seul gros document),
+  // avant de commencer à écouter les nouvelles données réparties par mois.
+  try {
+    await window.AbbaSync.migrateLegacyIfNeeded(user.uid);
+  } catch (err) {
+    console.error("Migration :", err);
   }
 
-  // Écoute en direct les données personnelles (spirituel + finance + réglages)
-  let firstSnapshot = true;
-  unsubUserData = window.AbbaSync.watchUserData(user.uid, async (cloudData) => {
-    suppressCloudWrite = true;
-    if (cloudData) {
-      DATA = { ...defaultData(), ...cloudData, settings: { ...defaultData().settings, ...(cloudData.settings || {}) } };
-    } else if (firstSnapshot) {
-      // Nouveau compte : reprend d'éventuelles données locales existantes sur cet appareil (migration)
-      const local = loadLocalCache();
-      DATA = local ? { ...defaultData(), ...local, settings: { ...defaultData().settings, ...(local.settings || {}) } } : defaultData();
-      suppressCloudWrite = false;
-      saveData(); // pousse la première version vers le cloud
-      suppressCloudWrite = true;
-    }
-    firstSnapshot = false;
+  // Réglages (petit document, toujours en direct)
+  unsubSettings = window.AbbaSync.watchSettings(user.uid, (settings) => {
+    DATA.settings = { ...defaultData().settings, ...(settings || {}) };
     saveLocalCache();
-    suppressCloudWrite = false;
+    renderDashboard();
+    renderFinancePanel();
+    setupSettingsValues();
+  });
 
+  // Agenda (petit document, toujours en direct)
+  unsubAgenda = window.AbbaSync.watchAgenda(user.uid, (tasks) => {
+    DATA.agenda = tasks || [];
+    saveLocalCache();
+    renderAgendaPanel();
+    renderDashboard();
+  });
+
+  // Mois en cours (spirituel + bilans + finance) — toujours en direct, c'est le plus consulté
+  const currentMonthKey = todayStr().slice(0, 7);
+  CURRENT_MONTH_KEY = currentMonthKey;
+  LOADED_MONTHS.add(currentMonthKey);
+  unsubCurrentMonth = window.AbbaSync.watchMonth(user.uid, currentMonthKey, (data) => {
+    MONTHS_CACHE[currentMonthKey] = data
+      ? { spiritual: data.spiritual || {}, journal: data.journal || {}, transactions: data.transactions || [] }
+      : (MONTHS_CACHE[currentMonthKey] || emptyMonthBucket());
+    rebuildCombinedData();
     renderSpiritualPanel();
     renderFinancePanel();
     renderHistorique();
     renderDashboard();
     renderAgendaPanel();
-    setupSettingsValues();
     pushSummary();
+  });
+
+  // Charge aussi le mois précédent (utile pour la semaine à cheval sur deux mois, sans surcoût notable)
+  ensureMonthLoaded(addDays(currentMonthKey + "-01", -1).slice(0, 7)).then(() => {
+    rebuildCombinedData();
+    renderDashboard();
+    renderHistorique();
   });
 }
 
@@ -329,11 +410,13 @@ function setupGotoLinks() {
 function setupSpiritDateNav() {
   document.getElementById("spiritPrevDay").addEventListener("click", () => {
     spiritViewDate = addDays(spiritViewDate, -1);
+    ensureMonthLoaded(monthKeyOf(spiritViewDate)).then(renderSpiritualPanel);
     renderSpiritualPanel();
   });
   document.getElementById("spiritNextDay").addEventListener("click", () => {
     if (spiritViewDate >= todayStr()) return;
     spiritViewDate = addDays(spiritViewDate, 1);
+    ensureMonthLoaded(monthKeyOf(spiritViewDate)).then(renderSpiritualPanel);
     renderSpiritualPanel();
   });
 }
@@ -373,9 +456,11 @@ function renderSpiritualPanel() {
 }
 
 function toggleSpiritItem(dateStr, itemId, value) {
-  if (!DATA.spiritual[dateStr]) DATA.spiritual[dateStr] = {};
-  DATA.spiritual[dateStr][itemId] = value;
-  saveData();
+  const mk = monthKeyOf(dateStr);
+  if (!MONTHS_CACHE[mk]) MONTHS_CACHE[mk] = emptyMonthBucket();
+  if (!MONTHS_CACHE[mk].spiritual[dateStr]) MONTHS_CACHE[mk].spiritual[dateStr] = {};
+  MONTHS_CACHE[mk].spiritual[dateStr][itemId] = value;
+  saveMonthData(mk);
   pushSummary();
 }
 
@@ -602,17 +687,17 @@ function addAgendaTask(title, date, time, source) {
     id: "ag_" + Date.now() + "_" + Math.random().toString(36).slice(2, 7),
     title, date, time: time || "", done: false, source: source || "manual",
   });
-  saveData();
+  saveAgendaData();
 }
 
 function toggleAgendaTask(id, done) {
   const t = DATA.agenda.find(a => a.id === id);
-  if (t) { t.done = done; saveData(); }
+  if (t) { t.done = done; saveAgendaData(); }
 }
 
 function deleteAgendaTask(id) {
   DATA.agenda = DATA.agenda.filter(a => a.id !== id);
-  saveData();
+  saveAgendaData();
 }
 
 function saveJournal() {
@@ -620,9 +705,12 @@ function saveJournal() {
   const planText = document.getElementById("journalPlan").value;
   const today = todayStr();
   const tomorrow = addDays(today, 1);
+  const mk = monthKeyOf(today);
 
-  if (!DATA.journal[today]) DATA.journal[today] = {};
-  DATA.journal[today].bilan = bilan;
+  if (!MONTHS_CACHE[mk]) MONTHS_CACHE[mk] = emptyMonthBucket();
+  if (!MONTHS_CACHE[mk].journal[today]) MONTHS_CACHE[mk].journal[today] = {};
+  MONTHS_CACHE[mk].journal[today].bilan = bilan;
+  saveMonthData(mk);
 
   // Retire les tâches précédemment générées par le plan du même jour, pour éviter les doublons si on ré-enregistre
   DATA.agenda = DATA.agenda.filter(a => a.planSourceDate !== today);
@@ -634,8 +722,8 @@ function saveJournal() {
       title: line, date: tomorrow, time: "", done: false, source: "plan", planSourceDate: today,
     });
   });
+  saveAgendaData();
 
-  saveData();
   const btn = document.getElementById("saveJournalBtn");
   const original = btn.textContent;
   btn.textContent = lines.length > 0 ? `Enregistré ✓ (${lines.length} tâche${lines.length > 1 ? "s" : ""} créée${lines.length > 1 ? "s" : ""} pour demain)` : "Enregistré ✓";
@@ -659,6 +747,31 @@ function renderAgendaPanel() {
   renderAgendaList("agendaLate", "agendaLateEmpty", late, true);
   renderAgendaList("agendaToday", "agendaTodayEmpty", todays, false);
   renderAgendaList("agendaUpcoming", "agendaUpcomingEmpty", upcoming, false);
+  renderJournalHistory();
+}
+
+function renderJournalHistory() {
+  const wrap = document.getElementById("journalHistoryList");
+  const emptyEl = document.getElementById("journalHistoryEmpty");
+  if (!wrap) return;
+  const entries = Object.entries(DATA.journal)
+    .filter(([date, j]) => j && j.bilan && j.bilan.trim() !== "")
+    .sort((a, b) => b[0].localeCompare(a[0]))
+    .slice(0, 30);
+
+  wrap.innerHTML = "";
+  emptyEl.style.display = entries.length === 0 ? "block" : "none";
+  entries.forEach(([date, j]) => {
+    const row = document.createElement("div");
+    row.className = "editor-category";
+    row.innerHTML = `
+      <div class="editor-cat-head" style="margin-bottom:4px;">
+        <span style="font-weight:600;font-size:13px;">${date === todayStr() ? "Aujourd'hui" : fmtLong(date)}</span>
+      </div>
+      <p style="font-size:13.5px;line-height:1.5;margin:0;white-space:pre-wrap;">${escapeAttr(j.bilan)}</p>
+    `;
+    wrap.appendChild(row);
+  });
 }
 
 function renderAgendaList(wrapId, emptyId, list, markLate) {
@@ -838,8 +951,15 @@ function renderTxTable(txs) {
 }
 
 function deleteTx(id) {
+  const tx = DATA.transactions.find(t => t.id === id);
   DATA.transactions = DATA.transactions.filter(t => t.id !== id);
-  saveData();
+  if (tx) {
+    const mk = monthKeyOf(tx.date);
+    if (MONTHS_CACHE[mk]) {
+      MONTHS_CACHE[mk].transactions = (MONTHS_CACHE[mk].transactions || []).filter(t => t.id !== id);
+      saveMonthData(mk);
+    }
+  }
   renderFinancePanel();
   renderDashboard();
   renderHistorique();
@@ -848,12 +968,16 @@ function deleteTx(id) {
 function setupFinanceMonthNav() {
   document.getElementById("finPrevMonth").addEventListener("click", () => {
     financeViewMonth--; if (financeViewMonth < 0) { financeViewMonth = 11; financeViewYear--; }
+    const mk = `${financeViewYear}-${String(financeViewMonth + 1).padStart(2, "0")}`;
+    ensureMonthLoaded(mk).then(renderFinancePanel);
     renderFinancePanel();
   });
   document.getElementById("finNextMonth").addEventListener("click", () => {
     const now = new Date();
     if (financeViewYear === now.getFullYear() && financeViewMonth === now.getMonth()) return;
     financeViewMonth++; if (financeViewMonth > 11) { financeViewMonth = 0; financeViewYear++; }
+    const mk = `${financeViewYear}-${String(financeViewMonth + 1).padStart(2, "0")}`;
+    ensureMonthLoaded(mk).then(renderFinancePanel);
     renderFinancePanel();
   });
 }
@@ -874,7 +998,7 @@ function setupTxModal() {
     });
   });
 
-  document.getElementById("txForm").addEventListener("submit", (e) => {
+  document.getElementById("txForm").addEventListener("submit", async (e) => {
     e.preventDefault();
     const amount = parseFloat(document.getElementById("txAmount").value);
     if (!amount || amount <= 0) return;
@@ -886,8 +1010,11 @@ function setupTxModal() {
       note: document.getElementById("txNote").value.trim(),
       amount,
     };
-    DATA.transactions.push(tx);
-    saveData();
+    const mk = monthKeyOf(tx.date);
+    await ensureMonthLoaded(mk); // au cas où on ajoute une transaction pour un mois pas encore en cache
+    if (!MONTHS_CACHE[mk]) MONTHS_CACHE[mk] = emptyMonthBucket();
+    MONTHS_CACHE[mk].transactions.push(tx);
+    saveMonthData(mk);
     const d = parseDate(tx.date);
     financeViewMonth = d.getMonth(); financeViewYear = d.getFullYear();
     renderFinancePanel();
@@ -918,6 +1045,21 @@ function closeTxModal() {
    HISTORIQUE
    ============================================================ */
 function renderHistorique() {
+  // S'assure que les mois nécessaires (5 dernières semaines + 6 derniers mois) sont chargés,
+  // puis affiche — et réaffiche automatiquement une fois le chargement terminé si besoin.
+  const neededMonths = new Set();
+  for (let i = 34; i >= 0; i--) neededMonths.add(monthKeyOf(addDays(todayStr(), -i)));
+  const now = new Date();
+  for (let i = 5; i >= 0; i--) {
+    let m = now.getMonth() - i, y = now.getFullYear();
+    while (m < 0) { m += 12; y--; }
+    neededMonths.add(`${y}-${String(m + 1).padStart(2, "0")}`);
+  }
+  const missing = [...neededMonths].filter(mk => !LOADED_MONTHS.has(mk));
+  if (missing.length > 0) {
+    ensureMonthsLoaded(missing, renderHistorique);
+  }
+
   const grid = document.getElementById("historyCalendar");
   grid.innerHTML = "";
   const days = 35;
@@ -936,7 +1078,6 @@ function renderHistorique() {
 
   const chart = document.getElementById("financeHistoryChart");
   chart.innerHTML = "";
-  const now = new Date();
   let maxVal = 1;
   const months = [];
   for (let i = 5; i >= 0; i--) {
@@ -969,7 +1110,7 @@ function setupSettings() {
     DATA.settings.savings = Number(document.getElementById("settingSavings").value) || 0;
     DATA.settings.generosity = Number(document.getElementById("settingGenerosity").value) || 0;
     DATA.settings.living = Number(document.getElementById("settingLiving").value) || 0;
-    saveData();
+    saveSettingsData();
     renderDashboard(); renderFinancePanel();
     const btn = document.getElementById("saveSettings");
     const original = btn.textContent;
@@ -979,10 +1120,20 @@ function setupSettings() {
 
   document.getElementById("exportData").addEventListener("click", exportData);
   document.getElementById("importData").addEventListener("change", importData);
-  document.getElementById("resetData").addEventListener("click", () => {
-    if (confirm("Es-tu sûr de vouloir effacer toutes tes données (spirituel + finance) ? Cette action est irréversible et sera aussi supprimée du cloud.")) {
+  document.getElementById("resetData").addEventListener("click", async () => {
+    if (confirm("Es-tu sûr de vouloir effacer toutes tes données (spirituel + finance + agenda) ? Cette action est irréversible et sera aussi supprimée du cloud.")) {
       DATA = defaultData();
-      saveData();
+      MONTHS_CACHE = {};
+      LOADED_MONTHS = new Set();
+      saveSettingsData();
+      saveAgendaData();
+      if (CURRENT_USER) {
+        try { await window.AbbaSync.deleteAllMonths(CURRENT_USER.uid); } catch (err) { console.error(err); }
+      }
+      const mk = todayStr().slice(0, 7);
+      LOADED_MONTHS.add(mk);
+      MONTHS_CACHE[mk] = emptyMonthBucket();
+      rebuildCombinedData();
       setupSettingsValues();
       renderSpiritualPanel(); renderFinancePanel(); renderDashboard(); renderHistorique(); renderAgendaPanel();
     }
@@ -1005,29 +1156,69 @@ function updateSettingsSum() {
   el.className = "settings-sum " + (total === 100 ? "ok" : "bad");
 }
 
-function exportData() {
-  const blob = new Blob([JSON.stringify(DATA, null, 2)], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `abba-life-donnees-${todayStr()}.json`;
-  a.click();
-  URL.revokeObjectURL(url);
+async function exportData() {
+  const btn = document.getElementById("exportData");
+  const original = btn.textContent;
+  btn.textContent = "Préparation…";
+  try {
+    let allMonths = {};
+    if (CURRENT_USER) {
+      allMonths = await window.AbbaSync.loadAllMonths(CURRENT_USER.uid); // garantit un export complet, même les mois pas encore ouverts sur cet appareil
+    } else {
+      allMonths = MONTHS_CACHE;
+    }
+    const merged = { settings: DATA.settings, agenda: DATA.agenda, spiritual: {}, journal: {}, transactions: [] };
+    Object.values(allMonths).forEach((m) => {
+      Object.assign(merged.spiritual, m.spiritual || {});
+      Object.assign(merged.journal, m.journal || {});
+      merged.transactions.push(...(m.transactions || []));
+    });
+    const blob = new Blob([JSON.stringify(merged, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `abba-life-donnees-${todayStr()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch (err) {
+    alert("Impossible de préparer l'export. Vérifie ta connexion.");
+    console.error(err);
+  }
+  btn.textContent = original;
 }
-function importData(e) {
+async function importData(e) {
   const file = e.target.files[0];
   if (!file) return;
   const reader = new FileReader();
-  reader.onload = () => {
+  reader.onload = async () => {
     try {
       const parsed = JSON.parse(reader.result);
       if (!parsed || typeof parsed !== "object") throw new Error("format invalide");
-      DATA = { ...defaultData(), ...parsed, settings: { ...defaultData().settings, ...(parsed.settings || {}) } };
-      saveData();
+
+      DATA.settings = { ...defaultData().settings, ...(parsed.settings || {}) };
+      DATA.agenda = parsed.agenda || [];
+      saveSettingsData();
+      saveAgendaData();
+
+      // Répartit les données importées par mois, comme le fait la migration automatique
+      const buckets = {};
+      function bucket(mk) { if (!buckets[mk]) buckets[mk] = emptyMonthBucket(); return buckets[mk]; }
+      Object.entries(parsed.spiritual || {}).forEach(([date, val]) => { bucket(monthKeyOf(date)).spiritual[date] = val; });
+      Object.entries(parsed.journal || {}).forEach(([date, val]) => { bucket(monthKeyOf(date)).journal[date] = val; });
+      (parsed.transactions || []).forEach((tx) => { bucket(monthKeyOf(tx.date) || "sans-date").transactions.push(tx); });
+
+      MONTHS_CACHE = buckets;
+      LOADED_MONTHS = new Set(Object.keys(buckets));
+      rebuildCombinedData();
+      if (CURRENT_USER) {
+        await Promise.all(Object.entries(buckets).map(([mk, data]) => window.AbbaSync.saveMonth(CURRENT_USER.uid, mk, data)));
+      }
+
       setupSettingsValues();
       renderSpiritualPanel(); renderFinancePanel(); renderDashboard(); renderHistorique(); renderAgendaPanel();
     } catch (err) {
       alert("Ce fichier ne semble pas être un export valide d'ABBA Life.");
+      console.error(err);
     }
   };
   reader.readAsText(file);

@@ -8,7 +8,7 @@ import {
   onAuthStateChanged, signOut, updateProfile,
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {
-  getFirestore, doc, setDoc, deleteDoc, onSnapshot, serverTimestamp,
+  getFirestore, doc, getDoc, setDoc, deleteDoc, onSnapshot, serverTimestamp,
   enableIndexedDbPersistence, collection, getDocs,
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { firebaseConfig, ADMIN_EMAILS } from "./firebase-config.js";
@@ -40,59 +40,51 @@ async function logIn(email, password) {
 async function logOut() { await signOut(auth); }
 function watchAuth(callback) { onAuthStateChanged(auth, callback); }
 
-/* ---------- DONNÉES PERSONNELLES (spirituel + finance + réglages) ---------- */
-function watchUserData(uid, callback) {
-  return onSnapshot(doc(db, "users", uid, "priv", "main"), (snap) => {
+/* ---------- RÉGLAGES (petit document, toujours en direct) ---------- */
+function watchSettings(uid, callback) {
+  return onSnapshot(doc(db, "users", uid, "priv", "settings"), (snap) => {
     callback(snap.exists() ? snap.data() : null);
-  }, (err) => console.error("watchUserData:", err));
+  }, (err) => console.error("watchSettings:", err));
 }
-async function saveUserData(uid, data) {
-  await setDoc(doc(db, "users", uid, "priv", "main"), data);
-}
-
-/* ---------- RÉSUMÉ POUR LES COORDINATEURS ---------- */
-async function saveSummary(uid, summary) {
-  await setDoc(doc(db, "summaries", uid), { ...summary, updatedAt: serverTimestamp() }, { merge: true });
-}
-async function loadAllSummaries() {
-  const snap = await getDocs(collection(db, "summaries"));
-  return snap.docs.map(d => ({ uid: d.id, ...d.data() }));
+async function saveSettings(uid, settings) {
+  await setDoc(doc(db, "users", uid, "priv", "settings"), settings);
 }
 
-/* ---------- CHECKLIST SPIRITUELLE PARTAGÉE ---------- */
-function watchChecklist(callback) {
-  return onSnapshot(doc(db, "config", "checklist"), (snap) => {
-    callback(snap.exists() ? snap.data().categories : null);
-  }, (err) => console.error("watchChecklist:", err));
+/* ---------- AGENDA (petit document, toujours en direct) ---------- */
+function watchAgenda(uid, callback) {
+  return onSnapshot(doc(db, "users", uid, "priv", "agenda"), (snap) => {
+    callback(snap.exists() ? (snap.data().tasks || []) : []);
+  }, (err) => console.error("watchAgenda:", err));
 }
-async function saveChecklist(categories) {
-  await setDoc(doc(db, "config", "checklist"), { categories, updatedAt: serverTimestamp() });
-}
-
-/* ---------- COORDINATEURS (liste modifiable depuis l'app) ---------- */
-function watchAdmins(callback) {
-  return onSnapshot(collection(db, "admins"), (snap) => {
-    callback(snap.docs.map(d => d.id));
-  }, (err) => console.error("watchAdmins:", err));
-}
-async function addAdmin(email, addedByEmail) {
-  const id = email.trim().toLowerCase();
-  await setDoc(doc(db, "admins", id), { addedBy: addedByEmail, addedAt: serverTimestamp() });
-}
-async function removeAdmin(email) {
-  const id = email.trim().toLowerCase();
-  await deleteDoc(doc(db, "admins", id));
-}
-async function ensureAdminSeed(email) {
-  const id = email.trim().toLowerCase();
-  await setDoc(doc(db, "admins", id), { addedBy: "bootstrap", addedAt: serverTimestamp() }, { merge: true });
+async function saveAgenda(uid, tasks) {
+  await setDoc(doc(db, "users", uid, "priv", "agenda"), { tasks });
 }
 
-window.AbbaSync = {
-  isAdminEmail,
-  signUp, logIn, logOut, watchAuth,
-  watchUserData, saveUserData,
-  saveSummary, loadAllSummaries,
-  watchChecklist, saveChecklist,
-  watchAdmins, addAdmin, removeAdmin, ensureAdminSeed,
-};
+/* ---------- DONNÉES MENSUELLES (spirituel + bilans + finance, un document par mois AAAA-MM) ----------
+   Chaque sauvegarde ne réécrit que le mois concerné — les données ne grossissent jamais
+   sans limite, même après des années d'usage quotidien. */
+function watchMonth(uid, monthKey, callback) {
+  return onSnapshot(doc(db, "users", uid, "months", monthKey), (snap) => {
+    callback(snap.exists() ? snap.data() : null);
+  }, (err) => console.error("watchMonth:", err));
+}
+async function getMonthOnce(uid, monthKey) {
+  const snap = await getDoc(doc(db, "users", uid, "months", monthKey));
+  return snap.exists() ? snap.data() : null;
+}
+async function saveMonth(uid, monthKey, monthData) {
+  await setDoc(doc(db, "users", uid, "months", monthKey), monthData);
+}
+async function loadAllMonths(uid) {
+  const snap = await getDocs(collection(db, "users", uid, "months"));
+  const result = {};
+  snap.docs.forEach((d) => { result[d.id] = d.data(); });
+  return result;
+}
+async function deleteAllMonths(uid) {
+  const snap = await getDocs(collection(db, "users", uid, "months"));
+  await Promise.all(snap.docs.map((d) => deleteDoc(d.ref)));
+}
+
+/* ---------- MIGRATION AUTOMATIQUE depuis l'ancien format (un seul gros document) ----------
+   S'exécute une seule fois par compte, de façon transparente, à la première connex
