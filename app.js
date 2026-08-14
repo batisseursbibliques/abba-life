@@ -584,7 +584,7 @@ let EDIT_CHECKLIST = [];
 function setupChecklistEditor() {
   document.getElementById("addChecklistCategory").addEventListener("click", () => {
     EDIT_CHECKLIST.push({ id: "cat_" + Date.now(), title: "Nouvelle catégorie", items: [] });
-    renderChecklistEditor();
+    renderChecklistEditorDom();
   });
   document.getElementById("saveChecklistBtn").addEventListener("click", async () => {
     // Nettoie les catégories/éléments vides
@@ -607,6 +607,9 @@ function setupChecklistEditor() {
 function renderChecklistEditor() {
   if (!IS_ADMIN) return;
   EDIT_CHECKLIST = deepClone(SPIRITUAL_CATEGORIES);
+  renderChecklistEditorDom();
+}
+function renderChecklistEditorDom() {
   const wrap = document.getElementById("checklistEditor");
   wrap.innerHTML = "";
   EDIT_CHECKLIST.forEach((cat, ci) => {
@@ -633,7 +636,7 @@ function renderChecklistEditor() {
       });
       row.querySelector(".editor-del-item").addEventListener("click", () => {
         EDIT_CHECKLIST[ci].items.splice(ii, 1);
-        renderChecklistEditorFromState(wrap);
+        renderChecklistEditorDom();
       });
       itemsWrap.appendChild(row);
     });
@@ -642,21 +645,14 @@ function renderChecklistEditor() {
     });
     catEl.querySelector(".editor-del-cat").addEventListener("click", () => {
       EDIT_CHECKLIST.splice(ci, 1);
-      renderChecklistEditorFromState(wrap);
+      renderChecklistEditorDom();
     });
     catEl.querySelector(".editor-add-item").addEventListener("click", () => {
       EDIT_CHECKLIST[ci].items.push({ id: "it_" + Date.now(), label: "" });
-      renderChecklistEditorFromState(wrap);
+      renderChecklistEditorDom();
     });
     wrap.appendChild(catEl);
   });
-}
-function renderChecklistEditorFromState(wrap) {
-  // Redessine l'éditeur à partir de l'état courant EDIT_CHECKLIST sans recharger depuis le serveur
-  const saved = SPIRITUAL_CATEGORIES;
-  SPIRITUAL_CATEGORIES = EDIT_CHECKLIST;
-  renderChecklistEditor();
-  SPIRITUAL_CATEGORIES = saved;
 }
 function escapeAttr(s) {
   return String(s).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;");
