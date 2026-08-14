@@ -45,7 +45,16 @@ Rien ne change dans la façon de déployer : pousse tout le dossier (y compris `
    - L'onglet **Coordination** (régularité de tous les Bâtisseurs).
    - Un bloc **Checklist spirituelle** dans Réglages, pour modifier les catégories/éléments — ça se met à jour pour tout le monde en direct.
 5. Pour ajouter un membre : il crée simplement son propre compte depuis l'écran de connexion, avec son e-mail à lui. Pas besoin que tu fasses quoi que ce soit côté Firebase.
-6. Pour ajouter un autre coordinateur plus tard : ajoute son e-mail dans `ADMIN_EMAILS` (`firebase-config.js`) **et** dans `firestore.rules`, republie les règles, et redéploie le site.
+6. Pour ajouter un autre coordinateur : plus besoin de toucher au code ! Depuis l'app → **Réglages → Coordinateurs**, tape son e-mail et clique "Ajouter". Il devient coordinateur dès sa prochaine connexion. Ton e-mail (`apotrepaulabba@gmail.com`) reste toujours coordinateur de secours, même si la liste est vidée par erreur.
+
+## Comment les données sont rangées (technique, pour information)
+
+Depuis cette mise à jour, les données de chaque Bâtisseur ne tiennent plus dans un seul gros fichier qui grossirait indéfiniment. Elles sont réparties ainsi :
+- **Réglages** (devise, pourcentages) : un tout petit document.
+- **Agenda** (tâches, rendez-vous) : un autre petit document.
+- **Spirituel + bilans + finance** : **un document par mois** (ex. `2026-08`). Chaque sauvegarde ne touche que le mois concerné — l'app reste rapide même après des années d'usage quotidien par des centaines de Bâtisseurs.
+
+La bascule depuis l'ancien format se fait **automatiquement et une seule fois**, en silence, à la première connexion de chaque personne après cette mise à jour — personne n'a rien à faire, aucune donnée n'est perdue.
 
 ## Ce que ça change concrètement
 
