@@ -64,6 +64,16 @@ async function saveAgenda(uid, tasks) {
   await setDoc(doc(db, "users", uid, "priv", "agenda"), { tasks });
 }
 
+/* ---------- DETTES (petit document, toujours en direct) ---------- */
+function watchDettes(uid, callback) {
+  return onSnapshot(doc(db, "users", uid, "priv", "dettes"), (snap) => {
+    callback(snap.exists() ? (snap.data().list || []) : []);
+  }, (err) => console.error("watchDettes:", err));
+}
+async function saveDettes(uid, list) {
+  await setDoc(doc(db, "users", uid, "priv", "dettes"), { list });
+}
+
 /* ---------- DONNÉES MENSUELLES (spirituel + bilans + finance, un document par mois AAAA-MM) ----------
    Chaque sauvegarde ne réécrit que le mois concerné — les données ne grossissent jamais
    sans limite, même après des années d'usage quotidien. */
@@ -172,6 +182,7 @@ window.AbbaSync = {
   signUp, logIn, logOut, watchAuth, getUserProfile,
   watchSettings, saveSettings,
   watchAgenda, saveAgenda,
+  watchDettes, saveDettes,
   watchMonth, getMonthOnce, saveMonth, loadAllMonths, deleteAllMonths,
   migrateLegacyIfNeeded,
   saveSummary, loadAllSummaries,

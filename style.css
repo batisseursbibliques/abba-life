@@ -446,3 +446,34 @@ button,input,select{font-family:inherit;}
 .guide-item{margin-bottom:16px;}
 .guide-title{font-weight:700;font-size:14px;margin:0 0 4px;color:var(--navy);}
 .guide-text{font-size:13px;line-height:1.55;color:var(--ink-soft);margin:0;}
+
+/* ===== POSTES FIXES (Réglages + Finance) ===== */
+.poste-row{
+  display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);
+}
+.poste-row:last-child{border-bottom:none;}
+.poste-row-body{flex:1;min-width:0;font-size:13.5px;}
+.poste-del{background:none;border:none;color:var(--brick);cursor:pointer;font-size:15px;padding:2px 4px;}
+
+.poste-track{padding:12px 0;border-bottom:1px solid var(--line);}
+.poste-track:last-child{border-bottom:none;}
+.poste-track-head{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.poste-dot{width:10px;height:10px;border-radius:50%;flex:0 0 auto;}
+.poste-dot.vert{background:var(--sage);}
+.poste-dot.orange{background:#d9922b;}
+.poste-dot.rouge{background:var(--brick);}
+.poste-track-title{font-weight:600;font-size:13.5px;flex:1;}
+.poste-track-nums{font-size:12px;color:var(--ink-soft);margin-bottom:8px;}
+.poste-track-form{display:flex;gap:8px;}
+.poste-track-form input{flex:1;}
+
+/* ===== DETTES ===== */
+.dette-track{padding:12px 0;border-bottom:1px solid var(--line);}
+.dette-track:last-child{border-bottom:none;}
+.dette-track-title{font-weight:600;font-size:13.5px;margin-bottom:4px;}
+.dette-track-title.soldee{color:var(--sage);}
+.dette-progress-track{background:var(--line);border-radius:6px;height:8px;overflow:hidden;margin-bottom:6px;}
+.dette-progress-fill{height:100%;background:var(--sage);}
+.dette-track-nums{font-size:12px;color:var(--ink-soft);margin-bottom:8px;}
+.dette-track-form{display:flex;gap:8px;}
+.dette-track-form input{flex:1;}

@@ -177,6 +177,17 @@
         </div>
       </div>
 
+      <div class="card" id="postesTrackingCard" style="display:none;">
+        <p class="eyebrow">Suivi de mes postes (ce mois-ci)</p>
+        <div id="postesTracking"></div>
+      </div>
+
+      <div class="card" id="dettesTrackingCard" style="display:none;">
+        <p class="eyebrow">Mes dettes</p>
+        <p class="settings-hint" id="dettesTotalHint"></p>
+        <div id="dettesTracking"></div>
+      </div>
+
       <div class="tx-list-wrap">
         <p class="eyebrow">Mouvements du mois</p>
         <div class="month-nav">
@@ -358,6 +369,34 @@
         </div>
         <p class="settings-sum" id="settingsSum"></p>
         <button class="btn-primary" id="saveSettings">Enregistrer</button>
+      </div>
+
+      <div class="card settings-card">
+        <p class="eyebrow">Mes postes fixes (dans Vie courante)</p>
+        <p class="settings-hint">Ex. Loyer, scolarité — un montant fixe chaque mois, ou un pourcentage de tes revenus.</p>
+        <div id="postesList"></div>
+        <form id="addPosteForm" style="display:flex;flex-direction:column;gap:10px;margin-top:10px;">
+          <input type="text" id="posteNom" class="text-input" placeholder="Ex. Loyer" required>
+          <div style="display:flex;gap:8px;">
+            <select id="posteType" class="text-input" style="flex:1;">
+              <option value="fixe">Montant fixe</option>
+              <option value="pourcentage">Pourcentage des revenus</option>
+            </select>
+            <input type="number" id="posteValeur" class="text-input" placeholder="Ex. 25000" min="0" required style="flex:1;">
+          </div>
+          <button class="btn-primary" type="submit">Ajouter ce poste</button>
+        </form>
+      </div>
+
+      <div class="card settings-card">
+        <p class="eyebrow">Mes dettes</p>
+        <p class="settings-hint">Ce que tu dois encore rembourser. Suis-les ici, et rembourse-les depuis l'onglet Finance au fil de tes remboursements.</p>
+        <div id="dettesList"></div>
+        <form id="addDetteForm" style="display:flex;flex-direction:column;gap:10px;margin-top:10px;">
+          <input type="text" id="detteNom" class="text-input" placeholder="Ex. Prêt frère Michel" required>
+          <input type="number" id="detteMontant" class="text-input" placeholder="Montant dû" min="0" required>
+          <button class="btn-primary" type="submit">Ajouter cette dette</button>
+        </form>
       </div>
 
       <div class="card settings-card admin-only" id="adminManagerCard" style="display:none;">

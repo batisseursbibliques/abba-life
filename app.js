@@ -61,10 +61,11 @@ const DAYS_FR = ["dim","lun","mar","mer","jeu","ven","sam"];
 /* ---------- Données ---------- */
 function defaultData() {
   return {
-    settings: { currency: "FCFA", tithe: 10, savings: 20, generosity: 5, living: 65 },
+    settings: { currency: "FCFA", tithe: 10, savings: 20, generosity: 5, living: 65, postes: [] },
     spiritual: {},
     transactions: [],
     agenda: [],
+    dettes: [],
     journal: {},
   };
 }
@@ -75,6 +76,7 @@ let IS_ADMIN = false;
 let ADMIN_LIST = [];
 let unsubSettings = null;
 let unsubAgenda = null;
+let unsubDettes = null;
 let unsubCurrentMonth = null;
 let unsubChecklist = null;
 let unsubAdmins = null;
@@ -86,7 +88,7 @@ let LOADED_MONTHS = new Set();
 let CURRENT_MONTH_KEY = null; // le mois en cours, toujours synchronisé en direct
 
 function monthKeyOf(dateStr) { return (dateStr || "").slice(0, 7); }
-function emptyMonthBucket() { return { spiritual: {}, journal: {}, transactions: [] }; }
+function emptyMonthBucket() { return { spiritual: {}, journal: {}, transactions: [], reserves: {} }; }
 function rebuildCombinedData() {
   DATA.spiritual = {};
   DATA.journal = {};
@@ -107,7 +109,7 @@ async function ensureMonthLoaded(monthKey) {
   try {
     const data = await window.AbbaSync.getMonthOnce(CURRENT_USER.uid, monthKey);
     MONTHS_CACHE[monthKey] = data
-      ? { spiritual: data.spiritual || {}, journal: data.journal || {}, transactions: data.transactions || [] }
+      ? { spiritual: data.spiritual || {}, journal: data.journal || {}, transactions: data.transactions || [], reserves: data.reserves || {} }
       : emptyMonthBucket();
     rebuildCombinedData();
   } catch (err) {
@@ -190,6 +192,8 @@ document.addEventListener("DOMContentLoaded", () => {
   setupFinanceMonthNav();
   setupTxModal();
   setupSettings();
+  setupPostesSettings();
+  setupDettes();
   setupAuthScreen();
   setupCoordination();
   setupChecklistEditor();
@@ -268,6 +272,7 @@ async function onAuthChanged(user) {
   // On coupe les anciens écouteurs à chaque changement de compte
   if (unsubSettings) { unsubSettings(); unsubSettings = null; }
   if (unsubAgenda) { unsubAgenda(); unsubAgenda = null; }
+  if (unsubDettes) { unsubDettes(); unsubDettes = null; }
   if (unsubCurrentMonth) { unsubCurrentMonth(); unsubCurrentMonth = null; }
   if (unsubChecklist) { unsubChecklist(); unsubChecklist = null; }
   if (unsubAdmins) { unsubAdmins(); unsubAdmins = null; }
@@ -345,13 +350,21 @@ async function onAuthChanged(user) {
     renderDashboard();
   });
 
+  // Dettes (petit document, toujours en direct)
+  unsubDettes = window.AbbaSync.watchDettes(user.uid, (list) => {
+    DATA.dettes = list || [];
+    saveLocalCache();
+    renderDettesSettingsList();
+    renderFinancePanel();
+  });
+
   // Mois en cours (spirituel + bilans + finance) — toujours en direct, c'est le plus consulté
   const currentMonthKey = todayStr().slice(0, 7);
   CURRENT_MONTH_KEY = currentMonthKey;
   LOADED_MONTHS.add(currentMonthKey);
   unsubCurrentMonth = window.AbbaSync.watchMonth(user.uid, currentMonthKey, (data) => {
     MONTHS_CACHE[currentMonthKey] = data
-      ? { spiritual: data.spiritual || {}, journal: data.journal || {}, transactions: data.transactions || [] }
+      ? { spiritual: data.spiritual || {}, journal: data.journal || {}, transactions: data.transactions || [], reserves: data.reserves || {} }
       : (MONTHS_CACHE[currentMonthKey] || emptyMonthBucket());
     rebuildCombinedData();
     renderSpiritualPanel();
@@ -915,6 +928,8 @@ function renderFinancePanel() {
 
   renderBudgetBars(financeViewYear, financeViewMonth);
   renderTxTable(txs);
+  renderPostesTracking(financeViewYear, financeViewMonth, revenus);
+  renderDettesTracking();
 }
 
 function renderBudgetBars(year, month) {
@@ -938,6 +953,191 @@ function renderBudgetBars(year, month) {
       <span class="budget-bar-track"><span class="budget-bar-fill" style="width:${Math.min(ratio*100,100)}%; background:${b.color};"></span></span>
       <span class="budget-bar-val">${fmtNum(b.paid)} / ${fmtNum(target)}</span>
     `;
+    wrap.appendChild(row);
+  });
+}
+
+/* ============================================================
+   POSTES FIXES (Réglages) — loyer, scolarité, etc. dans "Vie courante"
+   ============================================================ */
+function setupPostesSettings() {
+  document.getElementById("addPosteForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const nom = document.getElementById("posteNom").value.trim();
+    const type = document.getElementById("posteType").value;
+    const valeur = Number(document.getElementById("posteValeur").value);
+    if (!nom || !valeur || valeur <= 0) return;
+    if (!DATA.settings.postes) DATA.settings.postes = [];
+    DATA.settings.postes.push({ id: "poste_" + Date.now(), nom, type, valeur });
+    saveSettingsData();
+    document.getElementById("addPosteForm").reset();
+    renderPostesSettingsList();
+    renderFinancePanel();
+  });
+}
+function renderPostesSettingsList() {
+  const wrap = document.getElementById("postesList");
+  if (!wrap) return;
+  const postes = DATA.settings.postes || [];
+  wrap.innerHTML = "";
+  postes.forEach(p => {
+    const row = document.createElement("div");
+    row.className = "poste-row";
+    const valLabel = p.type === "fixe" ? `${fmtNum(p.valeur)} ${DATA.settings.currency}/mois` : `${p.valeur}% des revenus`;
+    row.innerHTML = `
+      <div class="poste-row-body"><strong>${escapeAttr(p.nom)}</strong> — ${valLabel}</div>
+      <button type="button" class="poste-del" title="Supprimer">🗑</button>
+    `;
+    row.querySelector(".poste-del").addEventListener("click", () => {
+      DATA.settings.postes = DATA.settings.postes.filter(x => x.id !== p.id);
+      saveSettingsData();
+      renderPostesSettingsList();
+      renderFinancePanel();
+    });
+    wrap.appendChild(row);
+  });
+}
+
+/* ============================================================
+   SUIVI DES POSTES (Finance) — dû ce mois-ci vs mis de côté, avec voyant
+   ============================================================ */
+function daysInMonth(year, month) { return new Date(year, month + 1, 0).getDate(); }
+
+function renderPostesTracking(year, month, revenus) {
+  const card = document.getElementById("postesTrackingCard");
+  const wrap = document.getElementById("postesTracking");
+  const postes = DATA.settings.postes || [];
+  if (postes.length === 0) { card.style.display = "none"; return; }
+  card.style.display = "";
+  wrap.innerHTML = "";
+
+  const monthKey = `${year}-${String(month + 1).padStart(2, "0")}`;
+  const bucket = MONTHS_CACHE[monthKey];
+  const reserves = (bucket && bucket.reserves) || {};
+
+  const now = new Date();
+  const isCurrentMonth = year === now.getFullYear() && month === now.getMonth();
+  const ratio = isCurrentMonth ? now.getDate() / daysInMonth(year, month) : 1;
+
+  postes.forEach(p => {
+    const due = p.type === "fixe" ? p.valeur : revenus * (p.valeur / 100);
+    const misDeCote = reserves[p.id] || 0;
+    const attendu = due * ratio;
+
+    let statut = "vert";
+    if (misDeCote < attendu * 0.5) statut = "rouge";
+    else if (misDeCote < attendu) statut = "orange";
+
+    const row = document.createElement("div");
+    row.className = "poste-track";
+    row.innerHTML = `
+      <div class="poste-track-head">
+        <span class="poste-dot ${statut}"></span>
+        <span class="poste-track-title">${escapeAttr(p.nom)}</span>
+      </div>
+      <p class="poste-track-nums">Dû ce mois-ci : ${fmtNum(due)} ${DATA.settings.currency} — Mis de côté : ${fmtNum(misDeCote)} ${DATA.settings.currency}</p>
+      <div class="poste-track-form">
+        <input type="number" class="text-input poste-add-input" placeholder="Montant mis de côté" min="0">
+        <button type="button" class="btn-secondary poste-add-btn">Ajouter</button>
+      </div>
+    `;
+    row.querySelector(".poste-add-btn").addEventListener("click", async () => {
+      const input = row.querySelector(".poste-add-input");
+      const amount = Number(input.value);
+      if (!amount || amount <= 0) return;
+      await ensureMonthLoaded(monthKey);
+      if (!MONTHS_CACHE[monthKey]) MONTHS_CACHE[monthKey] = emptyMonthBucket();
+      if (!MONTHS_CACHE[monthKey].reserves) MONTHS_CACHE[monthKey].reserves = {};
+      MONTHS_CACHE[monthKey].reserves[p.id] = (MONTHS_CACHE[monthKey].reserves[p.id] || 0) + amount;
+      saveMonthData(monthKey);
+      renderPostesTracking(financeViewYear, financeViewMonth, revenus);
+    });
+    wrap.appendChild(row);
+  });
+}
+
+/* ============================================================
+   DETTES (Réglages : gestion — Finance : suivi et remboursement)
+   ============================================================ */
+function saveDettesData() {
+  saveLocalCache();
+  if (CURRENT_USER) {
+    window.AbbaSync.saveDettes(CURRENT_USER.uid, DATA.dettes)
+      .catch(err => console.error("Sauvegarde des dettes :", err));
+  }
+}
+function setupDettes() {
+  document.getElementById("addDetteForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const nom = document.getElementById("detteNom").value.trim();
+    const montant = Number(document.getElementById("detteMontant").value);
+    if (!nom || !montant || montant <= 0) return;
+    DATA.dettes.push({ id: "dette_" + Date.now(), nom, montantInitial: montant, montantRestant: montant });
+    saveDettesData();
+    document.getElementById("addDetteForm").reset();
+    renderDettesSettingsList();
+    renderFinancePanel();
+  });
+}
+function renderDettesSettingsList() {
+  const wrap = document.getElementById("dettesList");
+  if (!wrap) return;
+  const dettes = DATA.dettes || [];
+  wrap.innerHTML = "";
+  dettes.forEach(d => {
+    const row = document.createElement("div");
+    row.className = "poste-row";
+    row.innerHTML = `
+      <div class="poste-row-body"><strong>${escapeAttr(d.nom)}</strong> — reste ${fmtNum(d.montantRestant)} / ${fmtNum(d.montantInitial)} ${DATA.settings.currency}</div>
+      <button type="button" class="poste-del" title="Supprimer">🗑</button>
+    `;
+    row.querySelector(".poste-del").addEventListener("click", () => {
+      DATA.dettes = DATA.dettes.filter(x => x.id !== d.id);
+      saveDettesData();
+      renderDettesSettingsList();
+      renderFinancePanel();
+    });
+    wrap.appendChild(row);
+  });
+}
+function renderDettesTracking() {
+  const card = document.getElementById("dettesTrackingCard");
+  const wrap = document.getElementById("dettesTracking");
+  const dettes = DATA.dettes || [];
+  if (dettes.length === 0) { card.style.display = "none"; return; }
+  card.style.display = "";
+  wrap.innerHTML = "";
+
+  const totalRestant = dettes.reduce((s, d) => s + d.montantRestant, 0);
+  document.getElementById("dettesTotalHint").textContent = `Total restant à rembourser : ${fmtNum(totalRestant)} ${DATA.settings.currency}`;
+
+  dettes.forEach(d => {
+    const pct = d.montantInitial > 0 ? Math.min(100, Math.round(((d.montantInitial - d.montantRestant) / d.montantInitial) * 100)) : 100;
+    const soldee = d.montantRestant <= 0;
+    const row = document.createElement("div");
+    row.className = "dette-track";
+    row.innerHTML = `
+      <p class="dette-track-title ${soldee ? "soldee" : ""}">${escapeAttr(d.nom)}${soldee ? " — Soldée ✓" : ""}</p>
+      <div class="dette-progress-track"><div class="dette-progress-fill" style="width:${pct}%;"></div></div>
+      <p class="dette-track-nums">Reste ${fmtNum(d.montantRestant)} / ${fmtNum(d.montantInitial)} ${DATA.settings.currency} (${pct}% remboursé)</p>
+      ${soldee ? "" : `
+      <div class="dette-track-form">
+        <input type="number" class="text-input dette-repay-input" placeholder="Montant remboursé" min="0">
+        <button type="button" class="btn-secondary dette-repay-btn">Rembourser</button>
+      </div>`}
+    `;
+    if (!soldee) {
+      row.querySelector(".dette-repay-btn").addEventListener("click", () => {
+        const input = row.querySelector(".dette-repay-input");
+        const amount = Number(input.value);
+        if (!amount || amount <= 0) return;
+        const dette = DATA.dettes.find(x => x.id === d.id);
+        if (dette) dette.montantRestant = Math.max(0, dette.montantRestant - amount);
+        saveDettesData();
+        renderDettesTracking();
+        renderDettesSettingsList();
+      });
+    }
     wrap.appendChild(row);
   });
 }
@@ -1140,6 +1340,7 @@ function setupSettings() {
       LOADED_MONTHS = new Set();
       saveSettingsData();
       saveAgendaData();
+      saveDettesData();
       if (CURRENT_USER) {
         try { await window.AbbaSync.deleteAllMonths(CURRENT_USER.uid); } catch (err) { console.error(err); }
       }
@@ -1160,6 +1361,8 @@ function setupSettingsValues() {
   document.getElementById("settingGenerosity").value = s.generosity;
   document.getElementById("settingLiving").value = s.living;
   updateSettingsSum();
+  renderPostesSettingsList();
+  renderDettesSettingsList();
 }
 function updateSettingsSum() {
   const total = ["settingTithe","settingSavings","settingGenerosity","settingLiving"]
@@ -1180,11 +1383,12 @@ async function exportData() {
     } else {
       allMonths = MONTHS_CACHE;
     }
-    const merged = { settings: DATA.settings, agenda: DATA.agenda, spiritual: {}, journal: {}, transactions: [] };
-    Object.values(allMonths).forEach((m) => {
+    const merged = { settings: DATA.settings, agenda: DATA.agenda, spiritual: {}, journal: {}, transactions: [], reserves: {} };
+    Object.entries(allMonths).forEach(([mk, m]) => {
       Object.assign(merged.spiritual, m.spiritual || {});
       Object.assign(merged.journal, m.journal || {});
       merged.transactions.push(...(m.transactions || []));
+      if (m.reserves && Object.keys(m.reserves).length) merged.reserves[mk] = m.reserves;
     });
     const blob = new Blob([JSON.stringify(merged, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
@@ -1210,8 +1414,10 @@ async function importData(e) {
 
       DATA.settings = { ...defaultData().settings, ...(parsed.settings || {}) };
       DATA.agenda = parsed.agenda || [];
+      DATA.dettes = parsed.dettes || [];
       saveSettingsData();
       saveAgendaData();
+      saveDettesData();
 
       // Répartit les données importées par mois, comme le fait la migration automatique
       const buckets = {};
@@ -1219,6 +1425,7 @@ async function importData(e) {
       Object.entries(parsed.spiritual || {}).forEach(([date, val]) => { bucket(monthKeyOf(date)).spiritual[date] = val; });
       Object.entries(parsed.journal || {}).forEach(([date, val]) => { bucket(monthKeyOf(date)).journal[date] = val; });
       (parsed.transactions || []).forEach((tx) => { bucket(monthKeyOf(tx.date) || "sans-date").transactions.push(tx); });
+      Object.entries(parsed.reserves || {}).forEach(([mk, res]) => { bucket(mk).reserves = res; });
 
       MONTHS_CACHE = buckets;
       LOADED_MONTHS = new Set(Object.keys(buckets));
