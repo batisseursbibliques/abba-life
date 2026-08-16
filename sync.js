@@ -25,11 +25,11 @@ function isAdminEmail(email) {
 }
 
 /* ---------- AUTHENTIFICATION ---------- */
-async function signUp(nom, email, password) {
+async function signUp(nom, telephone, email, password) {
   const cred = await createUserWithEmailAndPassword(auth, email.trim(), password);
   await updateProfile(cred.user, { displayName: nom.trim() });
   await setDoc(doc(db, "users", cred.user.uid), {
-    nom: nom.trim(), email: email.trim().toLowerCase(), createdAt: serverTimestamp(),
+    nom: nom.trim(), telephone: telephone.trim(), email: email.trim().toLowerCase(), createdAt: serverTimestamp(),
   });
   return cred.user;
 }
@@ -38,6 +38,10 @@ async function logIn(email, password) {
   return cred.user;
 }
 async function logOut() { await signOut(auth); }
+async function getUserProfile(uid) {
+  const snap = await getDoc(doc(db, "users", uid));
+  return snap.exists() ? snap.data() : null;
+}
 function watchAuth(callback) { onAuthStateChanged(auth, callback); }
 
 /* ---------- RÉGLAGES (petit document, toujours en direct) ---------- */
@@ -165,7 +169,7 @@ async function ensureAdminSeed(email) {
 
 window.AbbaSync = {
   isAdminEmail,
-  signUp, logIn, logOut, watchAuth,
+  signUp, logIn, logOut, watchAuth, getUserProfile,
   watchSettings, saveSettings,
   watchAgenda, saveAgenda,
   watchMonth, getMonthOnce, saveMonth, loadAllMonths, deleteAllMonths,

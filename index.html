@@ -36,7 +36,9 @@
     </form>
 
     <form id="signupForm" class="auth-form" style="display:none;">
-      <label class="field"><span>Nom complet</span><input type="text" id="signupNom" required autocomplete="name"></label>
+      <label class="field"><span>Prénom *</span><input type="text" id="signupPrenom" required autocomplete="given-name"></label>
+      <label class="field"><span>Nom *</span><input type="text" id="signupNomFamille" required autocomplete="family-name"></label>
+      <label class="field"><span>Numéro de téléphone *</span><input type="tel" id="signupTelephone" required autocomplete="tel" placeholder="Ex. 96 00 00 00"></label>
       <label class="field"><span>E-mail</span><input type="email" id="signupEmail" required autocomplete="email"></label>
       <label class="field"><span>Mot de passe (6 caractères min.)</span><input type="password" id="signupPassword" required minlength="6" autocomplete="new-password"></label>
       <p class="auth-error" id="signupError"></p>
@@ -84,6 +86,7 @@
     <!-- ================= ACCUEIL / DASHBOARD ================= -->
     <section class="panel active" id="panel-accueil">
       <div id="reminderBannerWrap"></div>
+      <button class="link-btn" data-goto="apropos" style="display:block;margin-bottom:12px;">Nouveau ici ? Comment utiliser l'app →</button>
       <div class="dash-grid">
 
         <div class="card seal-card">
@@ -271,7 +274,7 @@
       <p class="settings-hint">Régularité spirituelle des Bâtisseurs (7 derniers jours). Les données financières restent privées à chacun.</p>
       <div class="card">
         <table class="tx-table" id="coordTable">
-          <thead><tr><th>Bâtisseur</th><th>Aujourd'hui</th><th>7 jours</th><th>Série</th></tr></thead>
+          <thead><tr><th>Bâtisseur</th><th>Téléphone</th><th>Aujourd'hui</th><th>7 jours</th><th>Série</th></tr></thead>
           <tbody id="coordTableBody"></tbody>
         </table>
         <p class="empty-hint" id="coordEmptyHint">Aucun Bâtisseur pour l'instant.</p>
@@ -280,6 +283,35 @@
 
     <!-- ================= CONNAÎTRE ABBA ================= -->
     <section class="panel" id="panel-apropos">
+      <div class="card">
+        <p class="eyebrow">Comment utiliser l'app</p>
+
+        <div class="guide-item">
+          <p class="guide-title">📿 Spirituel</p>
+          <p class="guide-text">Chaque jour, coche ce que tu as accompli : déclaration du matin et du soir, prières, étude, service. Le cercle sur l'Accueil montre ta progression du jour. Tu peux revenir sur un jour passé avec les flèches en haut de l'onglet.</p>
+        </div>
+
+        <div class="guide-item">
+          <p class="guide-title">🗓️ Agenda</p>
+          <p class="guide-text">Le soir, écris le bilan de ta journée et note ce que tu veux faire demain — une ligne par tâche. Chaque ligne devient automatiquement une case à cocher pour le lendemain. Tu peux aussi ajouter directement un rendez-vous à une date précise, avec une heure si besoin.</p>
+        </div>
+
+        <div class="guide-item">
+          <p class="guide-title">💰 Finance</p>
+          <p class="guide-text">Enregistre tes revenus et dépenses avec le bouton "+". Choisis une catégorie (dîme, épargne, générosité, vie courante…). L'app calcule automatiquement si tu respectes la répartition que tu as fixée dans Réglages.</p>
+        </div>
+
+        <div class="guide-item">
+          <p class="guide-title">📊 Historique</p>
+          <p class="guide-text">Vue d'ensemble de ta régularité spirituelle (5 dernières semaines) et de ton équilibre financier (6 derniers mois).</p>
+        </div>
+
+        <div class="guide-item" style="margin-bottom:0;">
+          <p class="guide-title">☁️ Tes données</p>
+          <p class="guide-text">Tout est sauvegardé automatiquement dans le cloud dès que tu coches ou ajoutes quelque chose. Change de téléphone, reconnecte-toi avec le même e-mail : tout est là. L'app fonctionne aussi sans connexion.</p>
+        </div>
+      </div>
+
       <div class="about-hero">
         <img src="logo.png" alt="Logo ABBA">
         <h1>ABBA</h1>

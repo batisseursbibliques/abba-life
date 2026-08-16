@@ -70,6 +70,7 @@ function defaultData() {
 }
 let DATA = defaultData();
 let CURRENT_USER = null;
+let CURRENT_PROFILE = {};
 let IS_ADMIN = false;
 let ADMIN_LIST = [];
 let unsubSettings = null;
@@ -228,13 +229,16 @@ function setupAuthScreen() {
 
   document.getElementById("signupForm").addEventListener("submit", async (e) => {
     e.preventDefault();
-    const nom = document.getElementById("signupNom").value;
+    const prenom = document.getElementById("signupPrenom").value.trim();
+    const nomFamille = document.getElementById("signupNomFamille").value.trim();
+    const telephone = document.getElementById("signupTelephone").value.trim();
+    const nom = `${prenom} ${nomFamille}`.trim();
     const email = document.getElementById("signupEmail").value;
     const password = document.getElementById("signupPassword").value;
     const errEl = document.getElementById("signupError");
     errEl.textContent = "";
     try {
-      await window.AbbaSync.signUp(nom, email, password);
+      await window.AbbaSync.signUp(nom, telephone, email, password);
     } catch (err) {
       errEl.textContent = traduireErreurAuth(err);
     }
@@ -283,6 +287,14 @@ async function onAuthChanged(user) {
   document.getElementById("authScreen").style.display = "none";
   document.getElementById("app").style.display = "";
   document.getElementById("accountEmailHint").textContent = `Connecté(e) en tant que ${user.displayName || user.email} (${user.email})`;
+
+  // Charge le profil (nom, téléphone) une seule fois — utilisé pour le résumé envoyé aux coordinateurs
+  try {
+    CURRENT_PROFILE = await window.AbbaSync.getUserProfile(user.uid) || {};
+  } catch (err) {
+    console.error("Chargement du profil :", err);
+    CURRENT_PROFILE = {};
+  }
 
   // Écoute en direct la liste des coordinateurs (modifiable depuis l'app)
   unsubAdmins = window.AbbaSync.watchAdmins(async (emails) => {
@@ -488,6 +500,7 @@ function pushSummary() {
   window.AbbaSync.saveSummary(CURRENT_USER.uid, {
     nom: CURRENT_USER.displayName || CURRENT_USER.email,
     email: CURRENT_USER.email,
+    telephone: CURRENT_PROFILE.telephone || "",
     pctToday: dayPercent(todayStr()),
     last7,
     streak,
@@ -554,7 +567,7 @@ async function renderCoordination() {
   if (!IS_ADMIN) return;
   const body = document.getElementById("coordTableBody");
   const emptyHint = document.getElementById("coordEmptyHint");
-  body.innerHTML = `<tr><td colspan="4">Chargement…</td></tr>`;
+  body.innerHTML = `<tr><td colspan="5">Chargement…</td></tr>`;
   try {
     const rows = await window.AbbaSync.loadAllSummaries();
     rows.sort((a, b) => (b.pctToday || 0) - (a.pctToday || 0));
@@ -565,6 +578,7 @@ async function renderCoordination() {
       const tr = document.createElement("tr");
       tr.innerHTML = `
         <td>${r.nom || r.email || "—"}</td>
+        <td>${r.telephone || "—"}</td>
         <td>${r.pctToday || 0}%</td>
         <td>${moy7}%</td>
         <td>${r.streak || 0} j</td>
@@ -572,7 +586,7 @@ async function renderCoordination() {
       body.appendChild(tr);
     });
   } catch (err) {
-    body.innerHTML = `<tr><td colspan="4">Erreur de chargement.</td></tr>`;
+    body.innerHTML = `<tr><td colspan="5">Erreur de chargement.</td></tr>`;
     console.error(err);
   }
 }

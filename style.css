@@ -441,3 +441,8 @@ button,input,select{font-family:inherit;}
   background:var(--gold);color:#1a1a1a;border-radius:10px;padding:12px 14px;margin-bottom:14px;
   font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px;
 }
+
+/* ===== GUIDE D'UTILISATION ===== */
+.guide-item{margin-bottom:16px;}
+.guide-title{font-weight:700;font-size:14px;margin:0 0 4px;color:var(--navy);}
+.guide-text{font-size:13px;line-height:1.55;color:var(--ink-soft);margin:0;}
