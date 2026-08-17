@@ -74,6 +74,26 @@ async function saveDettes(uid, list) {
   await setDoc(doc(db, "users", uid, "priv", "dettes"), { list });
 }
 
+/* ---------- MODULES DU PARCOURS BÂTISSEUR ---------- */
+// Liste partagée des modules (comme la checklist), modifiable par les coordinateurs
+function watchModulesConfig(callback) {
+  return onSnapshot(doc(db, "config", "modules"), (snap) => {
+    callback(snap.exists() ? snap.data().list : null);
+  }, (err) => console.error("watchModulesConfig:", err));
+}
+async function saveModulesConfig(list) {
+  await setDoc(doc(db, "config", "modules"), { list, updatedAt: serverTimestamp() });
+}
+// Progression personnelle de chaque Bâtisseur (petit document, toujours en direct)
+function watchParcours(uid, callback) {
+  return onSnapshot(doc(db, "users", uid, "priv", "parcours"), (snap) => {
+    callback(snap.exists() ? (snap.data().modulesTermines || []) : []);
+  }, (err) => console.error("watchParcours:", err));
+}
+async function saveParcours(uid, modulesTermines) {
+  await setDoc(doc(db, "users", uid, "priv", "parcours"), { modulesTermines });
+}
+
 /* ---------- DONNÉES MENSUELLES (spirituel + bilans + finance, un document par mois AAAA-MM) ----------
    Chaque sauvegarde ne réécrit que le mois concerné — les données ne grossissent jamais
    sans limite, même après des années d'usage quotidien. */
@@ -183,6 +203,8 @@ window.AbbaSync = {
   watchSettings, saveSettings,
   watchAgenda, saveAgenda,
   watchDettes, saveDettes,
+  watchModulesConfig, saveModulesConfig,
+  watchParcours, saveParcours,
   watchMonth, getMonthOnce, saveMonth, loadAllMonths, deleteAllMonths,
   migrateLegacyIfNeeded,
   saveSummary, loadAllSummaries,

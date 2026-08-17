@@ -38,6 +38,26 @@ const DEFAULT_CHECKLIST = [
 ];
 let SPIRITUAL_CATEGORIES = deepClone(DEFAULT_CHECKLIST);
 let TOTAL_ITEMS = computeTotalItems();
+
+// Liste par défaut des 14 modules — les coordinateurs peuvent renommer/compléter
+// depuis l'app (les titres des modules 8 à 14 sont volontairement génériques,
+// à ajuster une fois le curriculum de ces modules finalisé).
+const DEFAULT_MODULES = [
+  { id: "m1", titre: "M1 — Disciple de Christ" },
+  { id: "m2", titre: "M2 — Guérir des Blessures de l'Âme" },
+  { id: "m3", titre: "M3 — Cure d'Âme Personnelle" },
+  { id: "m4", titre: "M4 — Aimer" },
+  { id: "m5", titre: "M5 — Bâtir le Caractère" },
+  { id: "m6", titre: "M6 — Le Saint-Esprit" },
+  { id: "m7", titre: "M7 — Victoire par la Prière" },
+  { id: "m8", titre: "M8" },
+  { id: "m9", titre: "M9" },
+  { id: "m10", titre: "M10" },
+  { id: "m11", titre: "M11" },
+  { id: "m12", titre: "M12" },
+  { id: "m13", titre: "M13" },
+  { id: "m14", titre: "M14" },
+];
 function computeTotalItems() {
   return SPIRITUAL_CATEGORIES.reduce((n, c) => n + c.items.length, 0);
 }
@@ -77,6 +97,10 @@ let ADMIN_LIST = [];
 let unsubSettings = null;
 let unsubAgenda = null;
 let unsubDettes = null;
+let unsubModulesConfig = null;
+let unsubParcours = null;
+let MODULES_CONFIG = [];
+let MODULES_TERMINES = [];
 let unsubCurrentMonth = null;
 let unsubChecklist = null;
 let unsubAdmins = null;
@@ -199,6 +223,7 @@ document.addEventListener("DOMContentLoaded", () => {
   setupChecklistEditor();
   setupAdminManager();
   setupAgenda();
+  setupModulesEditor();
 
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("sw.js", { updateViaCache: "none" }).then((reg) => {
@@ -273,6 +298,8 @@ async function onAuthChanged(user) {
   if (unsubSettings) { unsubSettings(); unsubSettings = null; }
   if (unsubAgenda) { unsubAgenda(); unsubAgenda = null; }
   if (unsubDettes) { unsubDettes(); unsubDettes = null; }
+  if (unsubModulesConfig) { unsubModulesConfig(); unsubModulesConfig = null; }
+  if (unsubParcours) { unsubParcours(); unsubParcours = null; }
   if (unsubCurrentMonth) { unsubCurrentMonth(); unsubCurrentMonth = null; }
   if (unsubChecklist) { unsubChecklist(); unsubChecklist = null; }
   if (unsubAdmins) { unsubAdmins(); unsubAdmins = null; }
@@ -283,6 +310,8 @@ async function onAuthChanged(user) {
     ADMIN_LIST = [];
     MONTHS_CACHE = {};
     LOADED_MONTHS = new Set();
+    MODULES_CONFIG = [];
+    MODULES_TERMINES = [];
     document.getElementById("authScreen").style.display = "flex";
     document.getElementById("app").style.display = "none";
     return;
@@ -356,6 +385,20 @@ async function onAuthChanged(user) {
     saveLocalCache();
     renderDettesSettingsList();
     renderFinancePanel();
+  });
+
+  // Liste partagée des modules (comme la checklist)
+  unsubModulesConfig = window.AbbaSync.watchModulesConfig((list) => {
+    MODULES_CONFIG = (list && list.length) ? list : deepClone(DEFAULT_MODULES);
+    renderModulesList();
+    renderModulesEditor();
+  });
+
+  // Ma progression personnelle dans les modules
+  unsubParcours = window.AbbaSync.watchParcours(user.uid, (modulesTermines) => {
+    MODULES_TERMINES = modulesTermines || [];
+    renderModulesList();
+    pushSummary();
   });
 
   // Mois en cours (spirituel + bilans + finance) — toujours en direct, c'est le plus consulté
@@ -515,6 +558,8 @@ function pushSummary() {
     email: CURRENT_USER.email,
     telephone: CURRENT_PROFILE.telephone || "",
     pctToday: dayPercent(todayStr()),
+    modulesFaits: MODULES_TERMINES.length,
+    modulesTotal: (MODULES_CONFIG && MODULES_CONFIG.length) || 0,
     last7,
     streak,
   }).catch(err => console.error("Résumé coordination :", err));
@@ -1154,6 +1199,90 @@ function renderDettesTracking() {
         renderDettesSettingsList();
       });
     }
+    wrap.appendChild(row);
+  });
+}
+
+/* ============================================================
+   MODULES DU PARCOURS BÂTISSEUR
+   ============================================================ */
+function saveParcoursData() {
+  if (CURRENT_USER) {
+    window.AbbaSync.saveParcours(CURRENT_USER.uid, MODULES_TERMINES)
+      .catch(err => console.error("Sauvegarde du parcours :", err));
+  }
+}
+function toggleModuleTermine(moduleId, done) {
+  if (done && !MODULES_TERMINES.includes(moduleId)) MODULES_TERMINES.push(moduleId);
+  if (!done) MODULES_TERMINES = MODULES_TERMINES.filter(id => id !== moduleId);
+  saveParcoursData();
+  renderModulesList();
+}
+function renderModulesList() {
+  const card = document.getElementById("modulesCard");
+  const wrap = document.getElementById("modulesList");
+  if (!card || !wrap) return;
+  if (!MODULES_CONFIG || MODULES_CONFIG.length === 0) { card.style.display = "none"; return; }
+  card.style.display = "";
+
+  const total = MODULES_CONFIG.length;
+  const faits = MODULES_TERMINES.length;
+  document.getElementById("modulesProgressHint").textContent = `${faits}/${total} modules terminés`;
+
+  wrap.innerHTML = "";
+  MODULES_CONFIG.forEach(m => {
+    const checked = MODULES_TERMINES.includes(m.id);
+    const row = document.createElement("label");
+    row.className = "check-item";
+    row.innerHTML = `<input type="checkbox" ${checked ? "checked" : ""}><span class="${checked ? "done" : ""}">${escapeAttr(m.titre)}</span>`;
+    row.querySelector("input").addEventListener("change", (e) => toggleModuleTermine(m.id, e.target.checked));
+    wrap.appendChild(row);
+  });
+}
+
+/* ---------- Éditeur de la liste des modules (coordinateurs uniquement) ---------- */
+let EDIT_MODULES = [];
+function setupModulesEditor() {
+  document.getElementById("addModuleBtn").addEventListener("click", () => {
+    EDIT_MODULES.push({ id: "mod_" + Date.now(), titre: "Nouveau module" });
+    renderModulesEditorDom();
+  });
+  document.getElementById("saveModulesBtn").addEventListener("click", async () => {
+    const clean = EDIT_MODULES.map(m => ({ ...m, titre: m.titre.trim() })).filter(m => m.titre !== "");
+    if (clean.length === 0) { alert("Ajoute au moins un module."); return; }
+    const btn = document.getElementById("saveModulesBtn");
+    const original = btn.textContent;
+    try {
+      await window.AbbaSync.saveModulesConfig(clean);
+      btn.textContent = "Enregistré ✓";
+      setTimeout(() => btn.textContent = original, 1400);
+    } catch (err) {
+      alert("Impossible d'enregistrer. Vérifie ta connexion.");
+      console.error(err);
+    }
+  });
+}
+function renderModulesEditor() {
+  if (!IS_ADMIN) return;
+  EDIT_MODULES = deepClone(MODULES_CONFIG);
+  renderModulesEditorDom();
+}
+function renderModulesEditorDom() {
+  const wrap = document.getElementById("modulesEditor");
+  if (!wrap) return;
+  wrap.innerHTML = "";
+  EDIT_MODULES.forEach((m, i) => {
+    const row = document.createElement("div");
+    row.className = "editor-item-row";
+    row.innerHTML = `
+      <input type="text" class="text-input editor-item-label" value="${escapeAttr(m.titre)}">
+      <button type="button" class="editor-del-item" title="Supprimer">🗑</button>
+    `;
+    row.querySelector(".editor-item-label").addEventListener("input", (e) => { EDIT_MODULES[i].titre = e.target.value; });
+    row.querySelector(".editor-del-item").addEventListener("click", () => {
+      EDIT_MODULES.splice(i, 1);
+      renderModulesEditorDom();
+    });
     wrap.appendChild(row);
   });
 }
