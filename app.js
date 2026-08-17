@@ -223,7 +223,6 @@ document.addEventListener("DOMContentLoaded", () => {
   setupChecklistEditor();
   setupAdminManager();
   setupAgenda();
-  setupModulesEditor();
 
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("sw.js", { updateViaCache: "none" }).then((reg) => {
