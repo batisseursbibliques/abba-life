@@ -696,9 +696,11 @@ function setupAgenda() {
     const title = document.getElementById("agendaTitle").value.trim();
     const date = document.getElementById("agendaDate").value;
     const time = document.getElementById("agendaTime").value;
+    const recurrence = document.getElementById("agendaRecurrence").value;
     if (!title || !date) return;
-    addAgendaTask(title, date, time, "manual");
+    addAgendaTask(title, date, time, "manual", recurrence);
     document.getElementById("agendaAddForm").reset();
+    document.getElementById("agendaDate").value = todayStr();
     renderAgendaPanel();
     renderDashboard();
   });
@@ -708,17 +710,30 @@ function setupAgenda() {
   if (dateInput) dateInput.value = todayStr();
 }
 
-function addAgendaTask(title, date, time, source) {
+function addAgendaTask(title, date, time, source, recurrence) {
   DATA.agenda.push({
     id: "ag_" + Date.now() + "_" + Math.random().toString(36).slice(2, 7),
     title, date, time: time || "", done: false, source: source || "manual",
+    recurrence: recurrence && recurrence !== "none" ? recurrence : null,
   });
   saveAgendaData();
 }
 
 function toggleAgendaTask(id, done) {
   const t = DATA.agenda.find(a => a.id === id);
-  if (t) { t.done = done; saveAgendaData(); }
+  if (!t) return;
+  t.done = done;
+  // Si la tâche se répète et vient d'être cochée, on programme automatiquement la prochaine occurrence
+  if (done && t.recurrence && !t.nextGenerated) {
+    const nextDate = t.recurrence === "daily" ? addDays(t.date, 1) : addDays(t.date, 7);
+    DATA.agenda.push({
+      id: "ag_" + Date.now() + "_" + Math.random().toString(36).slice(2, 7),
+      title: t.title, date: nextDate, time: t.time, done: false, source: t.source,
+      recurrence: t.recurrence,
+    });
+    t.nextGenerated = true;
+  }
+  saveAgendaData();
 }
 
 function deleteAgendaTask(id) {
@@ -809,11 +824,12 @@ function renderAgendaList(wrapId, emptyId, list, markLate) {
     const row = document.createElement("div");
     row.className = "agenda-item" + (markLate ? " late" : "");
     const dateLabel = t.date === todayStr() ? "" : fmtLong(t.date) + (t.time ? " · " : "");
+    const recurBadge = t.recurrence === "daily" ? " · 🔁 tous les jours" : t.recurrence === "weekly" ? " · 🔁 chaque semaine" : "";
     row.innerHTML = `
       <input type="checkbox" ${t.done ? "checked" : ""}>
       <div class="agenda-item-body">
         <div class="agenda-item-title ${t.done ? "done" : ""}">${escapeAttr(t.title)}</div>
-        <div class="agenda-item-meta">${dateLabel}${t.time || ""}</div>
+        <div class="agenda-item-meta">${dateLabel}${t.time || ""}${recurBadge}</div>
       </div>
       <button type="button" class="agenda-del" title="Supprimer">🗑</button>
     `;
