@@ -706,6 +706,7 @@ function renderChecklistEditorDom() {
         EDIT_CHECKLIST[ci].items[ii].label = e.target.value;
       });
       row.querySelector(".editor-del-item").addEventListener("click", () => {
+        if (!confirm(`Supprimer "${item.label}" ?`)) return;
         EDIT_CHECKLIST[ci].items.splice(ii, 1);
         renderChecklistEditorDom();
       });
@@ -715,6 +716,7 @@ function renderChecklistEditorDom() {
       EDIT_CHECKLIST[ci].title = e.target.value;
     });
     catEl.querySelector(".editor-del-cat").addEventListener("click", () => {
+      if (!confirm(`Supprimer la catégorie "${cat.title}" et tous ses éléments ?`)) return;
       EDIT_CHECKLIST.splice(ci, 1);
       renderChecklistEditorDom();
     });
@@ -883,6 +885,7 @@ function renderAgendaList(wrapId, emptyId, list, markLate) {
       renderDashboard();
     });
     row.querySelector(".agenda-del").addEventListener("click", () => {
+      if (!confirm(`Supprimer "${t.title}" de l'agenda ?`)) return;
       deleteAgendaTask(t.id);
       renderAgendaPanel();
       renderDashboard();
@@ -1049,6 +1052,7 @@ function renderPostesSettingsList() {
       <button type="button" class="poste-del" title="Supprimer">🗑</button>
     `;
     row.querySelector(".poste-del").addEventListener("click", () => {
+      if (!confirm(`Supprimer le poste "${p.nom}" ?`)) return;
       DATA.settings.postes = DATA.settings.postes.filter(x => x.id !== p.id);
       saveSettingsData();
       renderPostesSettingsList();
@@ -1152,6 +1156,7 @@ function renderDettesSettingsList() {
       <button type="button" class="poste-del" title="Supprimer">🗑</button>
     `;
     row.querySelector(".poste-del").addEventListener("click", () => {
+      if (!confirm(`Supprimer la dette "${d.nom}" ?`)) return;
       DATA.dettes = DATA.dettes.filter(x => x.id !== d.id);
       saveDettesData();
       renderDettesSettingsList();
@@ -1279,6 +1284,7 @@ function renderModulesEditorDom() {
     `;
     row.querySelector(".editor-item-label").addEventListener("input", (e) => { EDIT_MODULES[i].titre = e.target.value; });
     row.querySelector(".editor-del-item").addEventListener("click", () => {
+      if (!confirm(`Supprimer le module "${m.titre}" ?`)) return;
       EDIT_MODULES.splice(i, 1);
       renderModulesEditorDom();
     });
@@ -1309,6 +1315,7 @@ function renderTxTable(txs) {
 
 function deleteTx(id) {
   const tx = DATA.transactions.find(t => t.id === id);
+  if (!confirm(`Supprimer ce mouvement (${tx ? fmtNum(tx.amount) + " " + DATA.settings.currency : "?"}) ?`)) return;
   DATA.transactions = DATA.transactions.filter(t => t.id !== id);
   if (tx) {
     const mk = monthKeyOf(tx.date);

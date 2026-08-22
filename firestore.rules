@@ -26,6 +26,9 @@ service cloud.firestore {
 
       match /priv/{doc} {
         allow read, write: if request.auth != null && request.auth.uid == uid;
+        // Le coordinateur a besoin d'écrire ce repère précis quand il relie deux Bâtisseurs —
+        // il ne touche à rien d'autre dans l'espace privé de la personne.
+        allow write: if isAdmin() && doc == "binome";
       }
 
       // Données mensuelles (spirituel + bilans + finance), un document par mois AAAA-MM
@@ -48,6 +51,20 @@ service cloud.firestore {
     // Liste des coordinateurs, modifiable uniquement par un coordinateur déjà actif
     match /admins/{email} {
       allow read: if isAdmin();
+      allow write: if isAdmin();
+    }
+
+    // Binômes (accountability) : le coordinateur crée/supprime la paire,
+    // les deux membres peuvent ensuite modifier librement leur fiche partagée.
+    match /binomes/{pairId} {
+      allow read: if isAdmin() || (request.auth != null && request.auth.token.email.lower() in [resource.data.membre1, resource.data.membre2]);
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin() || (request.auth != null && request.auth.token.email.lower() in [resource.data.membre1, resource.data.membre2]);
+    }
+
+    // Séances et présence — chacun voit son propre suivi, seul le coordinateur marque la présence.
+    match /seances/{seanceId} {
+      allow read: if request.auth != null;
       allow write: if isAdmin();
     }
   }
