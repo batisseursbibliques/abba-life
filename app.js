@@ -548,10 +548,14 @@ function pushSummary() {
   if (!CURRENT_USER) return;
   const last7 = [];
   for (let i = 6; i >= 0; i--) last7.push(dayPercent(addDays(todayStr(), -i)));
+  // La série compte les jours passés réellement complets (hier et avant), et n'ajoute
+  // aujourd'hui que s'il est déjà à 80% ou plus — sans jamais effacer une vraie série
+  // juste parce que la journée en cours n'est pas encore terminée.
   let streak = 0;
-  for (let i = 0; i < 60; i++) {
+  for (let i = 1; i < 60; i++) {
     if (dayPercent(addDays(todayStr(), -i)) >= 80) streak++; else break;
   }
+  if (dayPercent(todayStr()) >= 80) streak++;
   window.AbbaSync.saveSummary(CURRENT_USER.uid, {
     nom: CURRENT_USER.displayName || CURRENT_USER.email,
     email: CURRENT_USER.email,
