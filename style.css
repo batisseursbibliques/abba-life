@@ -394,8 +394,9 @@ button,input,select{font-family:inherit;}
 
 /* ===== ÉCRAN DE CONNEXION ===== */
 .auth-screen{
-  min-height:100vh;display:flex;align-items:center;justify-content:center;
-  background:var(--bg);padding:24px;
+  position:fixed;inset:0;z-index:200;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--bg);padding:24px;overflow-y:auto;
 }
 .auth-box{
   width:100%;max-width:380px;background:var(--card-bg);border:1px solid var(--line);
