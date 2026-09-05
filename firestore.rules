@@ -67,33 +67,5 @@ service cloud.firestore {
       allow read: if request.auth != null;
       allow write: if isAdmin();
     }
-
-    // ── Enrollments — accès contrôlé aux apps ABBA ────────────
-    match /enrollments/{enrollId} {
-      allow read: if isAdmin()
-        || (request.auth != null && enrollId.matches(request.auth.uid + '_.*'));
-      allow create: if request.auth != null
-        && enrollId.matches(request.auth.uid + '_.*')
-        && request.resource.data.status == "pending";
-      allow update: if isAdmin();
-      allow delete: if isAdmin();
-    }
-
-    // ── Collections Mise en Action ────────────────────────────
-    match /mea_mentors/{email} {
-      allow read: if request.auth != null;
-      allow write: if isAdmin();
-    }
-    match /mea_assignments/{batisseurUid} {
-      allow read: if isAdmin()
-        || (request.auth != null && request.auth.uid == batisseurUid);
-      allow write: if isAdmin();
-    }
-    match /mea_summaries/{batisseurUid} {
-      allow write: if isAdmin()
-        || (request.auth != null && request.auth.uid == batisseurUid);
-      allow read: if isAdmin()
-        || (request.auth != null && request.auth.uid == batisseurUid);
-    }
   }
 }

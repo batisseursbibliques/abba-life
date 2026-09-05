@@ -49,7 +49,72 @@
   </div>
 </div>
 
-<div class="app" id="app" style="display:none;">
+<!-- ===== POLITIQUE DE CONFIDENTIALITÉ (inscription) ===== -->
+<div class="auth-screen" id="privacyScreen" style="display:none;">
+  <div class="auth-box" style="max-width:440px;">
+    <img src="logo.png" alt="Logo ABBA" class="auth-logo">
+    <h1 style="font-size:20px;">Politique de confidentialité</h1>
+    <p class="auth-sub" style="margin-bottom:16px;">ABBA — Alliance des Bâtisseurs Bibliques en Action</p>
+
+    <div class="privacy-body">
+
+      <div class="privacy-section">
+        <p class="privacy-title">Qui collecte tes données</p>
+        <p>ABBA (Alliance des Bâtisseurs Bibliques en Action), organisation chrétienne de développement holistique enregistrée à Cotonou, Bénin (Récépissé N°2025/A084/MISP).</p>
+      </div>
+
+      <div class="privacy-section">
+        <p class="privacy-title">Ce que nous collectons</p>
+        <ul class="privacy-list">
+          <li>Ton nom, prénom, numéro de téléphone et adresse e-mail.</li>
+          <li>Ton taux de régularité spirituelle quotidien (un pourcentage par jour — pas le contenu de ta checklist).</li>
+          <li>Ton avancement dans les modules du Parcours Bâtisseur, si tu es en formation.</li>
+        </ul>
+      </div>
+
+      <div class="privacy-section privacy-highlight">
+        <p class="privacy-title">🔒 Ce que nous ne voyons jamais</p>
+        <ul class="privacy-list">
+          <li><strong>Tes finances</strong> (dîme, épargne, générosité, dépenses) — elles restent sur ton appareil, visibles par toi seul. Aucun coordinateur ni formateur n'y a accès.</li>
+          <li><strong>Ton agenda personnel</strong> — strictement privé.</li>
+          <li><strong>Le détail de tes réponses</strong> à la checklist spirituelle.</li>
+        </ul>
+      </div>
+
+      <div class="privacy-section">
+        <p class="privacy-title">Comment nous utilisons tes données</p>
+        <ul class="privacy-list">
+          <li>Pour te contacter par téléphone ou e-mail concernant tes activités ABBA.</li>
+          <li>Pour que tes formateurs et coordinateurs puissent suivre ton avancement dans le Parcours Bâtisseur.</li>
+          <li>Jamais à des fins publicitaires ou commerciales.</li>
+          <li>Nous ne vendons ni ne partageons tes données avec des tiers.</li>
+        </ul>
+      </div>
+
+      <div class="privacy-section">
+        <p class="privacy-title">Tes droits</p>
+        <p>Tu peux demander la suppression de ton compte et de tes données à tout moment en contactant un coordinateur ABBA.</p>
+      </div>
+
+    </div>
+
+    <label class="privacy-accept">
+      <input type="checkbox" id="privacyCheckbox">
+      <span>J'ai lu et j'accepte la politique de confidentialité d'ABBA.</span>
+    </label>
+
+    <p class="auth-error" id="privacyError"></p>
+
+    <button type="button" class="btn-primary full" id="privacyConfirmBtn" style="margin-top:12px;">
+      Créer mon compte
+    </button>
+    <button type="button" class="btn-secondary full" id="privacyCancelBtn" style="margin-top:8px;">
+      Retour
+    </button>
+  </div>
+</div>
+
+
 
   <!-- ===== EN-TÊTE ===== -->
   <header class="topbar">
