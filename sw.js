@@ -1,67 +1,45 @@
-const CACHE_NAME = "abba-life-v9";
+const CACHE_NAME = "abba-life-v11";
 const ASSETS = [
-  "./", "./index.html", "./style.css", "./app.js", "./sync.js", "./firebase-config.js",
-  "./manifest.json", "./logo.png", "./icon-192.png", "./icon-512.png",
-  // Le SDK Firebase lui-même (fichiers statiques et versionnés) : indispensable pour que
-  // l'app puisse même démarrer hors connexion, avant toute synchronisation.
-  "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js",
-  "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js",
-  "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js",
+  "./", "./index.html", "./style.css", "./app.js", "./sync.js",
+  "./firebase-config.js", "./manifest.json", "./logo.png",
+  "./icon-192.png", "./icon-512.png",
 ];
 
-self.addEventListener("install", (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS)).then(() => self.skipWaiting())
+self.addEventListener("install", (e) => {
+  e.waitUntil(
+    caches.open(CACHE_NAME)
+      .then(cache => cache.addAll(ASSETS))
+      .then(() => self.skipWaiting())
   );
 });
 
-self.addEventListener("activate", (event) => {
-  event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
+self.addEventListener("activate", (e) => {
+  e.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
     ).then(() => self.clients.claim())
   );
 });
 
-self.addEventListener("fetch", (event) => {
-  if (event.request.method !== "GET") return;
-  const url = new URL(event.request.url);
-
-  // Le SDK Firebase (fichiers statiques, versionnés dans l'adresse) : on le sert du cache
-  // pour que l'app puisse démarrer même sans connexion.
-  if (url.hostname === "www.gstatic.com" && url.pathname.startsWith("/firebasejs/")) {
-    event.respondWith(
-      caches.match(event.request).then((cached) => {
-        const fetchPromise = fetch(event.request)
-          .then((networkResponse) => {
-            if (networkResponse && networkResponse.status === 200) {
-              const clone = networkResponse.clone();
-              caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
-            }
-            return networkResponse;
-          })
-          .catch(() => cached);
-        return cached || fetchPromise;
-      })
-    );
-    return;
+self.addEventListener("fetch", (e) => {
+  // Firebase et fonts : toujours réseau (pas de cache)
+  const url = new URL(e.request.url);
+  if (url.hostname.includes("firebase") ||
+      url.hostname.includes("googleapis") ||
+      url.hostname.includes("gstatic")) {
+    return; // laisse le navigateur gérer
   }
 
-  // Les vraies requêtes Firebase (authentification, Firestore) doivent toujours
-  // aller directement au réseau — jamais interceptées, jamais mises en cache.
-  if (url.origin !== self.location.origin) return;
-  event.respondWith(
-    caches.match(event.request).then((cached) => {
-      const fetchPromise = fetch(event.request)
-        .then((networkResponse) => {
-          if (networkResponse && networkResponse.status === 200) {
-            const clone = networkResponse.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
-          }
-          return networkResponse;
-        })
-        .catch(() => cached);
-      return cached || fetchPromise;
-    })
+  // Stratégie : réseau d'abord, cache en secours (hors ligne)
+  e.respondWith(
+    fetch(e.request)
+      .then(response => {
+        if (response && response.status === 200) {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(e.request, clone));
+        }
+        return response;
+      })
+      .catch(() => caches.match(e.request))
   );
 });

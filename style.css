@@ -477,35 +477,3 @@ button,input,select{font-family:inherit;}
 .dette-track-nums{font-size:12px;color:var(--ink-soft);margin-bottom:8px;}
 .dette-track-form{display:flex;gap:8px;}
 .dette-track-form input{flex:1;}
-
-/* ===== POLITIQUE DE CONFIDENTIALITÉ ===== */
-.privacy-body{
-  text-align:left;max-height:52vh;overflow-y:auto;
-  margin-bottom:16px;padding-right:4px;
-  font-size:13px;line-height:1.55;color:var(--ink);
-}
-.privacy-section{margin-bottom:14px;}
-.privacy-title{
-  font-weight:700;font-size:12px;text-transform:uppercase;
-  letter-spacing:.06em;color:var(--gold);margin:0 0 6px;
-}
-.privacy-list{
-  margin:0;padding-left:18px;
-  display:flex;flex-direction:column;gap:5px;
-}
-.privacy-list li{color:var(--ink-soft);}
-.privacy-highlight{
-  background:var(--sage-soft, #DCE6DA);
-  border-radius:8px;padding:10px 12px;
-}
-[data-theme="dark"] .privacy-highlight{background:rgba(76,122,94,.18);}
-.privacy-accept{
-  display:flex;align-items:flex-start;gap:10px;
-  background:var(--paper);border-radius:8px;padding:10px 12px;
-  cursor:pointer;font-size:13px;color:var(--ink);
-  border:1px solid var(--line);
-}
-.privacy-accept input[type="checkbox"]{
-  margin-top:2px;accent-color:var(--navy);
-  flex:0 0 auto;width:16px;height:16px;
-}

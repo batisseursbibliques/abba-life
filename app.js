@@ -257,20 +257,21 @@ function setupAuthScreen() {
 
   document.getElementById("signupForm").addEventListener("submit", async (e) => {
     e.preventDefault();
-    const errEl = document.getElementById("signupError");
-    errEl.textContent = "";
+    document.getElementById("signupError").textContent = "";
     // Montrer la politique de confidentialité avant de créer le compte
-    showPrivacyScreen();
+    document.getElementById("authScreen").style.display = "none";
+    document.getElementById("privacyScreen").style.display = "block";
+    document.getElementById("privacyCheckbox").checked = false;
+    document.getElementById("privacyError").textContent = "";
+    const privacyBtn = document.getElementById("privacyConfirmBtn");
+    privacyBtn.textContent = "Créer mon compte";
+    privacyBtn.disabled = false;
   });
 
-  // Politique de confidentialité — confirmer
   document.getElementById("privacyConfirmBtn").addEventListener("click", async () => {
     const checked = document.getElementById("privacyCheckbox").checked;
     const errEl = document.getElementById("privacyError");
-    if (!checked) {
-      errEl.textContent = "Tu dois accepter la politique de confidentialité pour continuer.";
-      return;
-    }
+    if (!checked) { errEl.textContent = "Tu dois accepter la politique de confidentialité pour continuer."; return; }
     errEl.textContent = "";
     const prenom = document.getElementById("signupPrenom").value.trim();
     const nomFamille = document.getElementById("signupNomFamille").value.trim();
@@ -282,33 +283,21 @@ function setupAuthScreen() {
     btn.textContent = "Création en cours…"; btn.disabled = true;
     try {
       await window.AbbaSync.signUp(nom, telephone, email, password);
-      // La redirection est gérée par onAuthChanged
+      document.getElementById("privacyScreen").style.display = "none";
     } catch (err) {
       errEl.textContent = traduireErreurAuth(err);
       btn.textContent = "Créer mon compte"; btn.disabled = false;
     }
   });
 
-  // Politique de confidentialité — annuler (retour au formulaire)
   document.getElementById("privacyCancelBtn").addEventListener("click", () => {
     document.getElementById("privacyScreen").style.display = "none";
     document.getElementById("authScreen").style.display = "flex";
-    document.getElementById("privacyCheckbox").checked = false;
-    document.getElementById("privacyError").textContent = "";
   });
 
   document.getElementById("logoutBtn").addEventListener("click", async () => {
     await window.AbbaSync.logOut();
   });
-}
-
-function showPrivacyScreen() {
-  document.getElementById("authScreen").style.display = "none";
-  document.getElementById("privacyScreen").style.display = "flex";
-  document.getElementById("privacyCheckbox").checked = false;
-  document.getElementById("privacyError").textContent = "";
-  document.getElementById("privacyConfirmBtn").textContent = "Créer mon compte";
-  document.getElementById("privacyConfirmBtn").disabled = false;
 }
 function switchAuthTab(which) {
   document.getElementById("authTabLogin").classList.toggle("active", which === "login");
@@ -353,7 +342,6 @@ async function onAuthChanged(user) {
 
   CURRENT_USER = user;
   document.getElementById("authScreen").style.display = "none";
-  document.getElementById("privacyScreen").style.display = "none";
   document.getElementById("app").style.display = "";
   document.getElementById("accountEmailHint").textContent = `Connecté(e) en tant que ${user.displayName || user.email} (${user.email})`;
 
