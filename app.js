@@ -257,42 +257,19 @@ function setupAuthScreen() {
 
   document.getElementById("signupForm").addEventListener("submit", async (e) => {
     e.preventDefault();
-    document.getElementById("signupError").textContent = "";
-    // Montrer la politique de confidentialité avant de créer le compte
-    document.getElementById("authScreen").style.display = "none";
-    document.getElementById("privacyScreen").style.display = "block";
-    document.getElementById("privacyCheckbox").checked = false;
-    document.getElementById("privacyError").textContent = "";
-    const privacyBtn = document.getElementById("privacyConfirmBtn");
-    privacyBtn.textContent = "Créer mon compte";
-    privacyBtn.disabled = false;
-  });
-
-  document.getElementById("privacyConfirmBtn").addEventListener("click", async () => {
-    const checked = document.getElementById("privacyCheckbox").checked;
-    const errEl = document.getElementById("privacyError");
-    if (!checked) { errEl.textContent = "Tu dois accepter la politique de confidentialité pour continuer."; return; }
-    errEl.textContent = "";
     const prenom = document.getElementById("signupPrenom").value.trim();
     const nomFamille = document.getElementById("signupNomFamille").value.trim();
     const telephone = document.getElementById("signupTelephone").value.trim();
     const nom = `${prenom} ${nomFamille}`.trim();
     const email = document.getElementById("signupEmail").value;
     const password = document.getElementById("signupPassword").value;
-    const btn = document.getElementById("privacyConfirmBtn");
-    btn.textContent = "Création en cours…"; btn.disabled = true;
+    const errEl = document.getElementById("signupError");
+    errEl.textContent = "";
     try {
       await window.AbbaSync.signUp(nom, telephone, email, password);
-      document.getElementById("privacyScreen").style.display = "none";
     } catch (err) {
       errEl.textContent = traduireErreurAuth(err);
-      btn.textContent = "Créer mon compte"; btn.disabled = false;
     }
-  });
-
-  document.getElementById("privacyCancelBtn").addEventListener("click", () => {
-    document.getElementById("privacyScreen").style.display = "none";
-    document.getElementById("authScreen").style.display = "flex";
   });
 
   document.getElementById("logoutBtn").addEventListener("click", async () => {
@@ -335,7 +312,6 @@ async function onAuthChanged(user) {
     MODULES_CONFIG = [];
     MODULES_TERMINES = [];
     document.getElementById("authScreen").style.display = "flex";
-    document.getElementById("privacyScreen").style.display = "none";
     document.getElementById("app").style.display = "none";
     return;
   }
@@ -351,6 +327,16 @@ async function onAuthChanged(user) {
   } catch (err) {
     console.error("Chargement du profil :", err);
     CURRENT_PROFILE = {};
+  }
+
+  // Personnaliser le cadre d'invitation avec le prénom
+  const greetingEl = document.getElementById("abbaInviteGreeting");
+  if (greetingEl) {
+    const prenom = CURRENT_PROFILE.prenom ||
+      (CURRENT_USER.displayName ? CURRENT_USER.displayName.split(" ")[0] : "");
+    greetingEl.textContent = prenom
+      ? `Bienvenue, ${prenom} 👋`
+      : "Bienvenue dans ABBA Life 👋";
   }
 
   // Écoute en direct la liste des coordinateurs (modifiable depuis l'app)
