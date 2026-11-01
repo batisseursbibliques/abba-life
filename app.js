@@ -75,8 +75,9 @@ const INCOME_CATEGORIES = ["Salaire", "Commerce", "Don reçu", "Autre revenu"];
 const GENEROSITY_CATS = ["Offrandes / Missions", "Aide aux pauvres / Générosité"];
 const LIVING_EXCLUDE = ["Dîme", "Épargne", ...GENEROSITY_CATS];
 
-const MONTHS_FR = ["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"];
-const DAYS_FR = ["dim","lun","mar","mer","jeu","ven","sam"];
+const EN_ = !!(window.I18N && window.I18N.lang === "en");
+const MONTHS_FR = EN_ ? ["January","February","March","April","May","June","July","August","September","October","November","December"] : ["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"];
+const DAYS_FR = EN_ ? ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"] : ["dim","lun","mar","mer","jeu","ven","sam"];
 
 /* ---------- Données ---------- */
 function defaultData() {
@@ -196,7 +197,7 @@ function fmtLong(dateStr) {
   return `${d.getDate()} ${MONTHS_FR[d.getMonth()]} ${d.getFullYear()}`;
 }
 function fmtNum(n) {
-  return Math.round(n).toLocaleString("fr-FR");
+  return Math.round(n).toLocaleString(EN_ ? "en-US" : "fr-FR");
 }
 
 /* ---------- État de navigation ---------- */

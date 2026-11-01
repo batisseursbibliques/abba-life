@@ -551,3 +551,5 @@ button,input,select{font-family:inherit;}
   text-decoration: none;
 }
 .abba-invite-link:hover { color: #C9A227; }
+
+html.i18n-wait body{visibility:hidden;}

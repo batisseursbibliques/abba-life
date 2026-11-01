@@ -6,6 +6,7 @@
 <title>ABBA Life — Carnet du Bâtisseur</title>
 <meta name="description" content="Suivi spirituel et financier quotidien, simple et gratuit.">
 <meta name="theme-color" content="#1F3B57">
+<script src="i18n.js"></script>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="logo.png" type="image/png">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -22,6 +23,7 @@
     <img src="logo.png" alt="Logo ABBA" class="auth-logo">
     <h1>ABBA Life</h1>
     <p class="auth-sub">Carnet du Bâtisseur</p>
+    <div data-no-i18n style="margin:0 0 10px;"><label class="field"><span>Langue · Language</span><select data-lang-select class="text-input"><option value="fr">Français</option><option value="en">English</option></select></label></div>
 
     <div class="auth-tabs">
       <button class="auth-tab active" id="authTabLogin" type="button">Se connecter</button>
@@ -450,6 +452,8 @@
         <button class="btn-secondary" id="addChecklistCategory" type="button">+ Ajouter une catégorie</button>
         <button class="btn-primary" id="saveChecklistBtn" type="button" style="margin-top:10px;">Enregistrer la checklist</button>
       </div>
+
+      <div class="card settings-card"><p class="eyebrow">Langue · Language</p><div data-no-i18n style="margin-top:4px;"><label class="field"><span>Langue · Language</span><select data-lang-select class="text-input"><option value="fr">Français</option><option value="en">English</option></select></label></div></div>
 
       <div class="card settings-card">
         <p class="eyebrow">Mon compte</p>
