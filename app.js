@@ -286,7 +286,7 @@ function traduireErreurAuth(err) {
   const code = err && err.code ? err.code : "";
   if (code.includes("email-already-in-use")) return "Cet e-mail a déjà un compte. Essaie « Se connecter ».";
   if (code.includes("invalid-credential") || code.includes("wrong-password") || code.includes("user-not-found")) return "E-mail ou mot de passe incorrect.";
-  if (code.includes("weak-password")) return "Mot de passe trop court (6 caractères minimum).";
+  if (code.includes("weak-password")) return "Mot de passe trop court (8 caractères minimum).";
   if (code.includes("invalid-email")) return "Adresse e-mail invalide.";
   if (code.includes("network-request-failed")) return "Pas de connexion internet. Réessaie plus tard.";
   return "Une erreur est survenue. Réessaie.";
