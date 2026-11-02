@@ -291,6 +291,20 @@ function traduireErreurAuth(err) {
   return "Une erreur est survenue. Réessaie.";
 }
 
+/* Connexion unique : sans compte connecté, on envoie vers l'accueil ABBA Bâtisseur (retour automatique ensuite).
+   Garde-fou : une seule redirection par minute ; si on revient sans être connecté, l'écran de connexion local s'affiche. */
+function allerALAccueil(extra) {
+  try {
+    const t = Number(sessionStorage.getItem("abba_redir") || 0);
+    if (t && Date.now() - t < 60000) return false;
+    sessionStorage.setItem("abba_redir", String(Date.now()));
+  } catch (e) { return false; }
+  const retour = location.pathname + location.search;
+  location.replace("/abba-batisseur/?" + (extra || ("retour=" + encodeURIComponent(retour))));
+  return true;
+}
+function accueilConnecte() { try { sessionStorage.removeItem("abba_redir"); } catch (e) {} }
+
 async function onAuthChanged(user) {
   // On coupe les anciens écouteurs à chaque changement de compte
   if (unsubSettings) { unsubSettings(); unsubSettings = null; }
@@ -310,12 +324,14 @@ async function onAuthChanged(user) {
     LOADED_MONTHS = new Set();
     MODULES_CONFIG = [];
     MODULES_TERMINES = [];
+    if (allerALAccueil()) return;
     document.getElementById("authScreen").style.display = "flex";
     document.getElementById("app").style.display = "none";
     return;
   }
 
   CURRENT_USER = user;
+  accueilConnecte();
   document.getElementById("authScreen").style.display = "none";
   document.getElementById("app").style.display = "";
   document.getElementById("accountEmailHint").textContent = `Connecté(e) en tant que ${user.displayName || user.email} (${user.email})`;
