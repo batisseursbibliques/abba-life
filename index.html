@@ -88,31 +88,11 @@
     <!-- ================= ACCUEIL / DASHBOARD ================= -->
     <section class="panel active" id="panel-accueil">
       <div id="reminderBannerWrap"></div>
-      <button class="link-btn" data-goto="apropos" style="display:block;margin-bottom:12px;">Nouveau ici ? Comment utiliser l'app →</button>
-
-      <!-- Cadre d'invitation ABBA -->
-      <div class="abba-invite-card" id="abbaInviteCard">
-        <div class="abba-invite-glow"></div>
-        <div class="abba-invite-content">
-          <p class="abba-invite-greeting" id="abbaInviteGreeting">Bienvenue dans ABBA Life 👋</p>
-          <p class="abba-invite-text">
-            Cette application t'aide à prendre le contrôle de ta <strong>vie spirituelle</strong>,
-            de tes <strong>finances</strong> et de ton <strong>temps</strong> — au quotidien, pas à pas.
-          </p>
-          <p class="abba-invite-text" style="margin-top:6px;">
-            Elle a été créée par <strong>ABBA — Alliance des Bâtisseurs Bibliques en Action</strong>,
-            un mouvement de transformation personnelle et communautaire ancré dans la foi.
-          </p>
-          <div class="abba-invite-divider"></div>
-          <p class="abba-invite-cta-text">
-            Tu es membre ABBA ? Rejoins ton espace personnel — actualités, activités, vie du mouvement.
-          </p>
-          <a href="https://abba-g.web.app/membres" target="_blank" rel="noopener" class="abba-invite-btn">
-            <span>Accéder à mon espace membre</span>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-          </a>
-          <p class="abba-invite-hint">Pas encore membre ? <a href="https://batisseursbibliques.org" target="_blank" rel="noopener" class="abba-invite-link">Découvrir ABBA →</a></p>
-        </div>
+      <!-- Accueil compact -->
+      <div class="home-hello">
+        <p class="home-hello-name" id="abbaInviteGreeting">Bienvenue dans ABBA Life 👋</p>
+        <p class="home-hello-text">Ton carnet pour la vie spirituelle, les finances et le temps.</p>
+        <button class="link-btn" data-goto="apropos">Comprendre ABBA et l'app →</button>
       </div>
 
       <div class="dash-grid">
@@ -317,6 +297,28 @@
 
     <!-- ================= CONNAÎTRE ABBA ================= -->
     <section class="panel" id="panel-apropos">
+      <div class="abba-invite-card" id="abbaInviteCard">
+        <div class="abba-invite-glow"></div>
+        <div class="abba-invite-content">
+          <p class="abba-invite-text">
+            Cette application t'aide à prendre le contrôle de ta <strong>vie spirituelle</strong>,
+            de tes <strong>finances</strong> et de ton <strong>temps</strong> — au quotidien, pas à pas.
+          </p>
+          <p class="abba-invite-text" style="margin-top:6px;">
+            Elle a été créée par <strong>ABBA — Alliance des Bâtisseurs Bibliques en Action</strong>,
+            un mouvement de transformation personnelle et communautaire ancré dans la foi.
+          </p>
+          <div class="abba-invite-divider"></div>
+          <p class="abba-invite-cta-text">
+            Tu es membre ABBA ? Rejoins ton espace personnel — actualités, activités, vie du mouvement.
+          </p>
+          <a href="https://abba-g.web.app/membres" target="_blank" rel="noopener" class="abba-invite-btn">
+            <span>Accéder à mon espace membre</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </a>
+          <p class="abba-invite-hint">Pas encore membre ? <a href="https://batisseursbibliques.org" target="_blank" rel="noopener" class="abba-invite-link">Découvrir ABBA →</a></p>
+        </div>
+      </div>
       <div class="card">
         <p class="eyebrow">Comment utiliser l'app</p>
 

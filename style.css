@@ -438,8 +438,8 @@ button,input,select{font-family:inherit;}
 .agenda-item.late .agenda-item-meta{color:var(--brick);font-weight:600;}
 .agenda-del{background:none;border:none;color:var(--brick);cursor:pointer;font-size:15px;padding:2px 4px;flex:0 0 auto;}
 .reminder-banner{
-  background:var(--gold);color:#1a1a1a;border-radius:10px;padding:12px 14px;margin-bottom:14px;
-  font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px;
+  background:transparent;color:var(--ink-soft);border-left:3px solid var(--gold);border-radius:4px;padding:4px 10px;margin-bottom:10px;
+  font-size:12px;font-weight:500;display:flex;align-items:center;gap:6px;
 }
 
 /* ===== GUIDE D'UTILISATION ===== */
@@ -742,3 +742,9 @@ html.i18n-wait body{visibility:hidden;}
 .lec-tag{font-size:11px;font-weight:700;color:#b86e00;text-transform:uppercase;}
 .lec-tag.rouge{color:#c62828;}
 .lec-debut{margin:8px 0;}
+
+/* ===== ACCUEIL COMPACT ===== */
+.home-hello{margin:0 0 14px;}
+.home-hello-name{font-size:18px;font-weight:700;color:var(--navy);margin:0 0 2px;}
+.home-hello-text{font-size:13px;color:var(--ink-soft);margin:0 0 4px;line-height:1.45;}
+.home-hello .link-btn{padding-left:0;font-size:13px;}
