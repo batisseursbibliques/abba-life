@@ -459,7 +459,9 @@ function applyTheme(theme) {
 function renderTopbarDate() {
   const el = document.getElementById("topbarDate");
   const d = new Date();
-  el.textContent = `${DAYS_FR[d.getDay()]} ${d.getDate()} ${MONTHS_FR[d.getMonth()]}`;
+  let fr = true; try { fr = localStorage.getItem("abba_lang") !== "en"; } catch (e) {}
+  try { el.textContent = d.toLocaleDateString(fr ? "fr-FR" : "en-GB", { weekday: "short", day: "numeric", month: "short" }); }
+  catch (e) { el.textContent = `${DAYS_FR[d.getDay()]} ${d.getDate()} ${MONTHS_FR[d.getMonth()]}`; }
 }
 
 /* ============================================================
