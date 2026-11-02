@@ -338,14 +338,9 @@ async function onAuthChanged(user) {
       : "Bienvenue dans ABBA Life 👋";
   }
 
-  // Droit de modifier la checklist partagée : lecture seule de la liste des coordinateurs (gérée dans Gestion)
-  unsubAdmins = window.AbbaSync.watchAdmins(async (emails) => {
-    ADMIN_LIST = emails || [];
-    const isBootstrap = window.AbbaSync.isAdminEmail(user.email);
-    const inDynamicList = ADMIN_LIST.map(e => e.toLowerCase()).includes(user.email.toLowerCase());
-    IS_ADMIN = isBootstrap || inDynamicList;
-    document.querySelectorAll(".admin-only").forEach(el => { el.style.display = IS_ADMIN ? "" : "none"; });
-  });
+  // Seul le coordinateur principal (PPV) modifie la checklist et la liste des modules
+  IS_ADMIN = window.AbbaSync.isAdminEmail(user.email);
+  document.querySelectorAll(".admin-only").forEach(el => { el.style.display = IS_ADMIN ? "" : "none"; });
 
   // Écoute en direct la checklist partagée
   unsubChecklist = window.AbbaSync.watchChecklist((categories) => {
