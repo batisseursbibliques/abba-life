@@ -1,7 +1,9 @@
-const CACHE_NAME = "abba-life-v20";
+const CACHE_NAME = "abba-life-v21";
 const ASSETS = [
   "./", "./index.html", "./style.css", "./i18n.js", "./lang/en.json", "./bible.js", "./lecture.js", "./voixNative.js", "./app.js", "./sync.js", "./firebase-config.js",
   "./manifest.json", "./logo.png", "./icon-192.png", "./icon-512.png",
+  // Habillage commun (même adresse que l'accueil : l'image n'est téléchargée qu'une fois pour les trois apps)
+  "/abba-batisseur/habillage.css", "/abba-batisseur/habillage.js", "/abba-batisseur/fond-accueil.webp",
   // Le SDK Firebase lui-même (fichiers statiques et versionnés) : indispensable pour que
   // l'app puisse même démarrer hors connexion, avant toute synchronisation.
   "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js",
@@ -63,5 +65,14 @@ self.addEventListener("fetch", (event) => {
   // Les vraies requêtes Firebase (authentification, Firestore) doivent toujours
   // aller directement au réseau — jamais interceptées, jamais mises en cache.
   if (url.origin !== self.location.origin) return;
+
+  // L'image du bandeau ne change pas : on la sert du cache sans jamais la retélécharger (forfaits limités).
+  if (url.pathname === "/abba-batisseur/fond-accueil.webp") {
+    event.respondWith(caches.match(event.request).then((hit) => hit || fetch(event.request).then((res) => {
+      if (res && res.ok) { const copie = res.clone(); caches.open(CACHE_NAME).then((c) => c.put(event.request, copie)); }
+      return res;
+    })));
+    return;
+  }
   event.respondWith(reseauPuisCache(event.request, CACHE_NAME));
 });
