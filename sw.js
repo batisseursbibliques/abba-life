@@ -1,4 +1,4 @@
-const CACHE_NAME = "abba-life-v19";
+const CACHE_NAME = "abba-life-v20";
 const ASSETS = [
   "./", "./index.html", "./style.css", "./i18n.js", "./lang/en.json", "./bible.js", "./lecture.js", "./voixNative.js", "./app.js", "./sync.js", "./firebase-config.js",
   "./manifest.json", "./logo.png", "./icon-192.png", "./icon-512.png",
@@ -9,9 +9,22 @@ const ASSETS = [
   "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js",
 ];
 
+// Le réseau d'abord (toujours la dernière version quand il y a du réseau, sans passer par le cache HTTP du téléphone),
+// le cache en secours : hors ligne, ou si le réseau met plus de 6 secondes à répondre.
+function reseauPuisCache(req, nomCache) {
+  const cacheOuvert = caches.open(nomCache);
+  const reseau = fetch(new Request(req, { cache: "no-cache" })).then((res) => {
+    if (res && res.ok && res.type !== "opaque") { const copie = res.clone(); cacheOuvert.then((c) => c.put(req, copie)); }
+    return res;
+  });
+  const secours = () => cacheOuvert.then((c) => c.match(req)).then((hit) => hit || reseau);
+  const delai = new Promise((resolve) => setTimeout(() => resolve(secours()), 6000));
+  return Promise.race([reseau.catch(secours), delai]);
+}
+
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS)).then(() => self.skipWaiting())
+    caches.open(CACHE_NAME).then((cache) => Promise.all(ASSETS.map((u) => fetch(new Request(u, { cache: "reload" })).then((r) => (r.ok ? cache.put(u, r) : null)).catch(() => null)))).then(() => self.skipWaiting())
   );
 });
 
@@ -50,18 +63,5 @@ self.addEventListener("fetch", (event) => {
   // Les vraies requêtes Firebase (authentification, Firestore) doivent toujours
   // aller directement au réseau — jamais interceptées, jamais mises en cache.
   if (url.origin !== self.location.origin) return;
-  event.respondWith(
-    caches.match(event.request).then((cached) => {
-      const fetchPromise = fetch(event.request)
-        .then((networkResponse) => {
-          if (networkResponse && networkResponse.status === 200) {
-            const clone = networkResponse.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
-          }
-          return networkResponse;
-        })
-        .catch(() => cached);
-      return cached || fetchPromise;
-    })
-  );
+  event.respondWith(reseauPuisCache(event.request, CACHE_NAME));
 });
