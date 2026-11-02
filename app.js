@@ -396,7 +396,6 @@ async function onAuthChanged(user) {
   unsubParcours = window.AbbaSync.watchParcours(user.uid, (modulesTermines) => {
     MODULES_TERMINES = modulesTermines || [];
     renderModulesList();
-    pushSummary();
   });
 
   // Mois en cours (spirituel + bilans + finance) — toujours en direct, c'est le plus consulté
@@ -413,7 +412,6 @@ async function onAuthChanged(user) {
     renderHistorique();
     renderDashboard();
     renderAgendaPanel();
-    pushSummary();
   });
 
   // Charge aussi le mois précédent (utile pour la semaine à cheval sur deux mois, sans surcoût notable)
@@ -544,7 +542,6 @@ function toggleSpiritItem(dateStr, itemId, value) {
   if (!MONTHS_CACHE[mk].spiritual[dateStr]) MONTHS_CACHE[mk].spiritual[dateStr] = {};
   MONTHS_CACHE[mk].spiritual[dateStr][itemId] = value;
   saveMonthData(mk);
-  pushSummary();
 }
 
 function dayPercent(dateStr) {
@@ -552,19 +549,6 @@ function dayPercent(dateStr) {
   if (!dayData) return 0;
   const done = Object.values(dayData).filter(Boolean).length;
   return TOTAL_ITEMS > 0 ? Math.round((done / TOTAL_ITEMS) * 100) : 0;
-}
-
-/* ============================================================
-   RÉSUMÉ DU PARCOURS (nom, e-mail, modules faits — rien d'autre)
-   ============================================================ */
-function pushSummary() {
-  if (!CURRENT_USER) return;
-  window.AbbaSync.saveSummary(CURRENT_USER.uid, {
-    nom: CURRENT_USER.displayName || CURRENT_USER.email,
-    email: CURRENT_USER.email,
-    modulesFaits: MODULES_TERMINES.length,
-    modulesTotal: (MODULES_CONFIG && MODULES_CONFIG.length) || 0,
-  }).catch(err => console.error("Résumé du Parcours :", err));
 }
 
 /* ============================================================

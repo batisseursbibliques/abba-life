@@ -159,10 +159,6 @@ async function migrateLegacyIfNeeded(uid) {
   await setDoc(migFlagRef, { done: true, at: serverTimestamp() });
 }
 
-/* ---------- RÉSUMÉ DU PARCOURS (nom, e-mail, modules faits) ---------- */
-async function saveSummary(uid, summary) {
-  await setDoc(doc(db, "summaries", uid), { ...summary, updatedAt: serverTimestamp() }, { merge: true });
-}
 
 /* ---------- CHECKLIST SPIRITUELLE PARTAGÉE ---------- */
 function watchChecklist(callback) {
@@ -202,7 +198,6 @@ window.AbbaSync = {
   watchParcours, saveParcours,
   watchMonth, getMonthOnce, saveMonth, loadAllMonths, deleteAllMonths,
   migrateLegacyIfNeeded,
-  saveSummary,
   watchChecklist, saveChecklist,
   watchAdmins,
 };
