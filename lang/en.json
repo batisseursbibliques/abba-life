@@ -270,5 +270,7 @@
 "Total actuel : {0}%": "Current total: {0}%",
 "· 🔁 chaque semaine": "· 🔁 every week",
 "Supprimer \"{0}\" de l'agenda ?": "Delete “{0}” from the agenda?",
-"{0} — reste {1} / {2} {3}": "{0} — {1} left / {2} {3}"
+"{0} — reste {1} / {2} {3}": "{0} — {1} left / {2} {3}",
+"Chargement de la Bible…": "Loading the Bible…",
+"Bible": "Bible"
 }

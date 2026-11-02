@@ -75,6 +75,7 @@
   <nav class="tabs" id="tabs" aria-label="Navigation principale">
     <button class="tab active" data-tab="accueil"><span class="tab-num">I</span>Aujourd'hui</button>
     <button class="tab" data-tab="spirituel"><span class="tab-num">II</span>Spirituel</button>
+    <button class="tab" data-tab="bible"><span class="tab-num">📖</span>Bible</button>
     <button class="tab" data-tab="finance"><span class="tab-num">III</span>Finance</button>
     <button class="tab" data-tab="historique"><span class="tab-num">IV</span>Historique</button>
     <button class="tab" data-tab="agenda"><span class="tab-num">VII</span>Agenda</button>
@@ -180,6 +181,13 @@
     </section>
 
     <!-- ================= FINANCE ================= -->
+    <section class="panel" id="panel-bible">
+      <div class="panel-head">
+        <h1>Bible</h1>
+      </div>
+      <div id="bibleRoot"><p class="small">Chargement de la Bible…</p></div>
+    </section>
+
     <section class="panel" id="panel-finance">
       <div class="panel-head">
         <h1>Suivi financier</h1>
@@ -495,6 +503,10 @@
       <svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 3 L12 21 M6 7 Q12 3 18 7" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
       <span>Spirituel</span>
     </button>
+    <button class="bnav-btn" data-tab="bible">
+      <svg viewBox="0 0 24 24" width="20" height="20"><path d="M4 5 C7 4 10 4.5 12 6 C14 4.5 17 4 20 5 V19 C17 18 14 18.5 12 20 C10 18.5 7 18 4 19 Z M12 6 V20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+      <span>Bible</span>
+    </button>
     <button class="bnav-btn" data-tab="finance">
       <svg viewBox="0 0 24 24" width="20" height="20"><rect x="4" y="8" width="16" height="11" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 8 V6 Q8 3 12 3 Q16 3 16 6 V8" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
       <span>Finance</span>
@@ -563,6 +575,8 @@
 
 <script type="module" src="sync.js"></script>
 <script type="module" src="app.js"></script>
+<script type="module" src="bible.js"></script>
+<script type="module" src="lecture.js"></script>
 <script src="/abba-batisseur/barre.js" defer></script>
 </body>
 </html>

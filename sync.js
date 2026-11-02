@@ -197,7 +197,18 @@ async function ensureAdminSeed(email) {
   await setDoc(doc(db, "admins", id), { addedBy: "bootstrap", addedAt: serverTimestamp() }, { merge: true });
 }
 
+/* Calendrier de lecture de la Bible : même emplacement que dans le Parcours (formation/{uid}/lecture/{plan}),
+   donc l'avancement est le même dans les deux applications. */
+function watchLecture(uid, planId, callback) {
+  return onSnapshot(doc(db, "formation", uid, "lecture", planId), (snap) => callback(snap.exists() ? snap.data() : null),
+    (err) => console.error("watchLecture:", err));
+}
+async function saveLecture(uid, planId, data) {
+  await setDoc(doc(db, "formation", uid, "lecture", planId), { ...data, updatedAt: serverTimestamp() });
+}
+
 window.AbbaSync = {
+  watchLecture, saveLecture,
   isAdminEmail,
   signUp, logIn, logOut, watchAuth, getUserProfile,
   watchSettings, saveSettings,

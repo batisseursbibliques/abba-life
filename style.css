@@ -553,3 +553,192 @@ button,input,select{font-family:inherit;}
 .abba-invite-link:hover { color: #C9A227; }
 
 html.i18n-wait body{visibility:hidden;}
+
+/* ===== BIBLE ===== */
+.bib-onglets{display:flex;gap:8px;margin-bottom:14px;}
+.bib-onglet{border:1px solid var(--line);background:var(--card-bg);color:var(--ink);border-radius:8px;padding:8px 14px;font:inherit;font-size:14px;cursor:pointer;}
+.bib-onglet.active{background:var(--navy);border-color:var(--navy);color:#fff;}
+.bib-barre{position:sticky;top:0;z-index:5;background:var(--cream);padding:8px 0 10px;border-bottom:1px solid var(--line);margin-bottom:12px;}
+.bib-barre select,.bib-recherche select,.bib-recherche input[type=search]{border:1px solid var(--line);border-radius:7px;padding:9px 10px;font-size:14px;font-family:var(--font-body);color:var(--ink);background:var(--card-bg);min-width:0;}
+.bib-grille2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-bottom:6px;}
+.bib-ligne{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:6px;}
+.bib-ligne select{flex:1 1 90px;}
+.bib-options{display:grid;gap:8px;margin-top:10px;font-size:13px;}
+.bib-options[hidden],.bib-fond[hidden],#bibLire[hidden],#bibChercher[hidden]{display:none;}
+.bib-opt{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px;}
+.bib-opt input[type=checkbox]{width:auto;flex:none;}
+.bib-alerte{color:var(--brick);font-size:13px;margin:8px 0 0;}
+.bib-texte{background:var(--card-bg);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;line-height:1.75;}
+.bib-texte h3{margin:0 0 10px;font-family:var(--font-display);}
+.bib-verset{margin:0 0 8px;border-radius:4px;cursor:pointer;scroll-margin-top:150px;}
+.bib-verset.actif{background:rgba(201,162,39,0.28);}
+.bib-verset sup{color:var(--gold);font-weight:700;margin-right:5px;}
+.bib-xref{border:1px solid var(--line);background:transparent;color:var(--ink-soft);border-radius:99px;font-size:11px;padding:1px 8px;cursor:pointer;white-space:nowrap;}
+.bib-nav{display:flex;justify-content:space-between;margin:14px 0;}
+.bib-credit{margin-top:6px;}
+.bib-recherche{display:grid;gap:10px;background:var(--card-bg);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:12px;}
+.bib-progres{height:8px;background:var(--line);border-radius:6px;overflow:hidden;margin:4px 0 10px;}
+.bib-progres>div{height:100%;background:linear-gradient(90deg,var(--gold),var(--navy));}
+.bib-res{display:block;width:100%;text-align:left;background:var(--card-bg);border:1px solid var(--line);border-radius:10px;padding:9px 12px;margin-bottom:7px;cursor:pointer;font:inherit;color:inherit;line-height:1.5;}
+.bib-res-ref{font-weight:700;font-size:13px;color:var(--navy);}
+.bib-res mark{background:rgba(201,162,39,0.4);padding:0;color:inherit;}
+.bib-fond{position:fixed;inset:0;background:rgba(0,0,0,0.38);z-index:60;display:flex;align-items:flex-end;justify-content:center;}
+.bib-feuille{background:var(--card-bg);color:var(--ink);width:min(100%,640px);max-height:80vh;overflow-y:auto;border-radius:16px 16px 0 0;padding:14px 16px calc(20px + env(safe-area-inset-bottom));box-shadow:0 -4px 20px rgba(0,0,0,0.25);}
+.bib-feuille-tete{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px;}
+.bib-ref{border-top:1px solid var(--line);padding-top:9px;margin-top:9px;line-height:1.55;}
+.bib-ref-tete{display:flex;justify-content:space-between;align-items:center;gap:8px;}
+.bib-ref-texte{font-size:14px;}
+.bib-centre{text-align:center;margin-top:12px;}
+@media (max-width:900px){ .bottom-nav .bnav-btn span{font-size:9.5px;} }
+.decl-pj{border:none;background:rgba(201,162,39,.22);color:#7a5a00;border-radius:8px;font-size:12px;padding:0 6px;margin:0 6px 0 4px;cursor:pointer;vertical-align:baseline;}
+.bib-citation{font-style:italic;margin-bottom:8px;}
+.bib-feuille select{border:1px solid var(--line);border-radius:7px;padding:8px 10px;font-size:14px;color:var(--ink);background:var(--card-bg);margin-bottom:4px;max-width:100%;}
+
+/* Tableaux à remplir (exercices M11) */
+.fm-tb{margin:6px 0 14px;}
+.fm-tb-row{border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin:8px 0;background:#fff;}
+.fm-tb-l{margin:0 0 6px;font-size:14px;font-weight:600;color:var(--navy);}
+.fm-tb-cells{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;}
+.fm-tb-cells label,.fm-tb-c{display:flex;flex-direction:column;gap:3px;}
+.fm-tb-cells small{font-size:11px;color:var(--muted,#6b6b6b);}
+.fm-tb-cells .text-input{width:100%;min-width:0;}
+.fm-tb-tot{background:var(--paper);}
+.fm-tb-out{font-weight:700;color:var(--navy);padding:8px 0;font-size:15px;}
+.fm-cases{margin:4px 0 12px;}
+.vref{color:var(--navy);border-bottom:1px dotted var(--navy);cursor:pointer;}
+.vref:hover,.vref:focus{background:rgba(201,162,39,.2);outline:none;}
+.vref-all{border:none;background:rgba(201,162,39,.22);color:#7a5a00;border-radius:8px;font-size:12px;padding:0 6px;margin-left:2px;cursor:pointer;vertical-align:baseline;}
+.bib-ref-texte{white-space:pre-line;}
+.bib-fond{padding-bottom:var(--bib-bas,0px);}
+.bib-fond-leve .bib-feuille{border-radius:16px;max-height:calc(100vh - var(--bib-bas) - 24px);max-height:calc(100dvh - var(--bib-bas) - 24px);padding-bottom:16px;}
+
+/* ===== Taille du texte (variable --tl, réglée par le bouton « Aa ») ===== */
+.fm-texte{font-size:calc(15px*var(--tl,1));}
+.fm-texte h3{font-size:calc(17px*var(--tl,1));}
+.fm-texte h4{font-size:calc(14px*var(--tl,1));}
+.decl-text{font-size:calc(17px*var(--tl,1));}
+.bib-texte{font-size:calc(16px*var(--tl,1));}
+.bib-texte h3{font-size:calc(19px*var(--tl,1));}
+.bib-ref-texte{font-size:calc(14px*var(--tl,1));}
+.fm-q,.fm-ex-body{font-size:calc(15px*var(--tl,1));}
+.fm-q .small,.fm-ex-body .small{font-size:calc(13px*var(--tl,1));}
+.taille-aa{font-weight:700;font-size:14px;}
+.taille-box{position:fixed;top:64px;right:12px;z-index:90;display:flex;align-items:center;gap:8px;background:var(--card-bg);border:1px solid var(--line);border-radius:14px;padding:8px 12px;box-shadow:0 6px 20px rgba(0,0,0,.2);}
+.taille-box[hidden]{display:none;}
+.taille-t{font-size:12px;color:var(--ink-soft);}
+.taille-v{min-width:44px;text-align:center;font-size:13px;font-weight:600;}
+.taille-b,.taille-r{border:1px solid var(--line);background:var(--paper);color:var(--navy);border-radius:10px;font-weight:700;font-size:15px;min-width:40px;height:36px;cursor:pointer;}
+/* ===== Texte justifié (leçons, déclaration, Bible) avec coupure des mots ===== */
+.fm-texte p,.fm-texte li,.decl-text p,.bib-verset,.bib-ref-texte{text-align:justify;hyphens:auto;-webkit-hyphens:auto;overflow-wrap:break-word;}
+/* ===== Protection contre le copier-coller : leçons, questions, exercices (champs de saisie libres) ===== */
+#formationRoot .fm-lecon:not([data-mbti]) .fm-texte,#formationRoot .fm-q,#formationRoot .fm-ex-body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
+#formationRoot .fm-ex-body input,#formationRoot .fm-ex-body textarea,#formationRoot .fm-ex-body select{-webkit-user-select:text;user-select:text;}
+/* ===== Lecture qui défile : bloc lu surligné ; titre du lecteur cliquable ===== */
+.tts-now{background:rgba(201,162,39,.26);border-radius:6px;box-shadow:0 0 0 4px rgba(201,162,39,.26);transition:background .25s;}
+button.tts-mini-t{background:none;border:none;color:inherit;font:inherit;font-size:13px;font-weight:600;text-align:left;cursor:pointer;padding:0;}
+
+/* Coordination : tableau qui reste dans le cadre */
+.coord-table{table-layout:fixed;width:100%;font-size:12.5px;}
+.coord-table th,.coord-table td{padding:8px 3px;overflow-wrap:anywhere;word-break:break-word;vertical-align:top;text-align:left;}
+.coord-table th:nth-child(1){width:31%;} .coord-table th:nth-child(2){width:29%;}
+.coord-table th:nth-child(3){width:13%;} .coord-table th:nth-child(4){width:12%;} .coord-table th:nth-child(5){width:15%;}
+.coord-table small{display:block;font-size:11px;color:var(--muted,#6b6b6b);font-weight:400;}
+.coord-row{cursor:pointer;}
+.coord-table td.warn{color:#b3261e;font-weight:600;}
+.coord-detail td{background:var(--paper);padding:8px 10px;}
+
+.fm-blocked{border:2px solid #b3261e;background:#fdecea;color:#7a1a14;}
+.fm-blocked .eyebrow{color:#b3261e;}
+.coord-bloc{margin-top:8px;display:flex;flex-direction:column;gap:6px;}
+.coord-table small.warn{color:#b3261e;font-weight:600;}
+
+html.i18n-wait body{visibility:hidden;}
+
+/* Chiffres qui changent : petite bulle cliquable */
+.fm-vf{border-bottom:1px dotted var(--ink-soft);cursor:pointer;}
+.fm-vf::after{content:"ⓘ";font-size:.8em;margin-left:2px;color:var(--ink-soft);}
+.fm-bulle{position:fixed;z-index:9999;background:var(--navy);color:#fff;font-size:13px;line-height:1.4;padding:8px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.25);}
+.fm-att summary{cursor:pointer;color:var(--ink-soft);}
+
+/* Ma journée (checklist de la journée) */
+.jour-today{display:flex;flex-direction:column;gap:8px;margin:12px 0;}
+.jour-slot{flex-direction:row;justify-content:flex-start;gap:12px;padding:12px 14px;font-size:15px;text-align:left;}
+.jour-slot span{font-size:22px;}
+.fm-nav{display:flex;gap:10px;justify-content:space-between;margin:16px 0 6px;}
+.fm-nav .btn-primary,.fm-nav .btn-secondary{flex:1;}
+.diag-out{white-space:pre-wrap;word-break:break-word;font-size:12px;line-height:1.5;background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:8px;margin:10px 0 0;min-height:0;}
+.diag-out:empty{display:none;}
+
+/* Indisponibilité signalée */
+.ind-item{border:1px solid var(--line);border-radius:var(--radius);padding:10px 12px;margin:10px 0;}
+.ind-item p{margin:4px 0;}
+.ind-form label{display:block;margin:12px 0 4px;font-weight:600;}
+.ind-form .fm-check{display:flex;font-weight:400;}
+.ind-form .text-input{width:100%;box-sizing:border-box;}
+.ind-err{color:#b3261e;font-size:14px;min-height:18px;margin:6px 0;}
+
+/* Guide dépliable dans le bloc bleu */
+.abba-guide{margin-top:14px;border-top:1px solid rgba(201,162,39,.3);padding-top:10px;}
+.abba-guide>summary{cursor:pointer;color:#C9A227;font-weight:700;font-size:14px;list-style:none;}
+.abba-guide>summary::-webkit-details-marker,.g-sec>summary::-webkit-details-marker{display:none;}
+.abba-guide>summary::before{content:"▸ ";}
+.abba-guide[open]>summary::before{content:"▾ ";}
+.g-sec{margin:8px 0;border:1px solid rgba(255,255,255,.14);border-radius:10px;padding:8px 12px;background:rgba(255,255,255,.04);}
+.g-sec>summary{cursor:pointer;font-weight:600;color:#fff;font-size:13.5px;list-style:none;}
+.g-sec>summary::before{content:"+ ";color:#C9A227;}
+.g-sec[open]>summary::before{content:"– ";}
+.g-sec p,.g-sec li{font-size:13px;color:rgba(255,255,255,.85);line-height:1.55;margin:6px 0;}
+.g-sec ul,.g-sec ol{padding-left:20px;margin:6px 0;}
+.g-charte{margin-top:6px;width:100%;background:transparent;border:1px solid rgba(201,162,39,.6);color:#C9A227;border-radius:10px;padding:10px 12px;font-weight:700;font-size:13px;cursor:pointer;}
+
+/* Calendrier de lecture (Bible > Calendrier) */
+.lec-carte{border-color:var(--gold);}
+.lec-titre{font-family:var(--font-display);font-size:22px;color:var(--navy);margin:4px 0 10px;}
+.lec-puces{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;}
+.lec-chap{border:1px solid var(--navy);background:transparent;color:var(--navy);border-radius:999px;padding:6px 12px;font:inherit;font-size:14px;cursor:pointer;}
+.lec-barre{height:10px;background:var(--paper);border:1px solid var(--line);border-radius:999px;overflow:hidden;margin:8px 0;}
+.lec-barre span{display:block;height:100%;background:var(--gold);}
+.lec-rythme{color:var(--ink-soft);}
+.lec-intro ul{padding-left:20px;margin:8px 0;}
+.lec-intro li{margin:6px 0;font-size:14px;}
+.lec-phase{border:1px solid var(--line);border-radius:var(--radius);background:var(--card-bg);padding:10px 12px;margin:10px 0;}
+.lec-phase>summary{cursor:pointer;}
+.lec-livres{margin:6px 0;}
+.lec-jours{margin-top:8px;}
+.lec-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line);flex-wrap:wrap;}
+.lec-row.fait .lec-lect{opacity:.55;}
+.lec-row.prochain{background:var(--paper);border-radius:8px;padding-left:6px;padding-right:6px;}
+.lec-row.ratt{color:var(--ink-soft);}
+.lec-box{border:0;background:transparent;font-size:26px;line-height:1;cursor:pointer;color:var(--navy);padding:0 4px;}
+.lec-n{font-weight:600;min-width:62px;font-size:14px;}
+.lec-lect{display:flex;flex-wrap:wrap;gap:6px;flex:1;}
+.lec-lect .lec-chap{padding:3px 9px;font-size:13px;}
+
+/* Lecture du jour : accordéon en une ligne, vert / orange / rouge */
+.lec-acc>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;font-weight:600;font-size:15px;padding:2px 0;}
+.lec-acc>summary::-webkit-details-marker{display:none;}
+.lec-acc>summary::after{content:"▾";margin-left:auto;color:var(--ink-soft);flex:none;}
+.lec-acc[open]>summary::after{content:"▴";}
+.lec-ligne{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0;}
+.lec-acc[open] .lec-ligne{white-space:normal;}
+.lec-puce-etat{width:12px;height:12px;border-radius:50%;flex:none;background:var(--gold);}
+.lec-corps{margin-top:12px;}
+.lec-ligne-j{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--line);}
+.lec-ligne-j .lec-puces{margin:0;flex:1;}
+.lec-ligne-j .btn-secondary{padding:6px 12px;}
+.lec-carte.lec-ok{border-color:#2e7d32;}
+.lec-carte.lec-ok .lec-puce-etat{background:#2e7d32;}
+.lec-carte.lec-orange{border-color:#e08a00;}
+.lec-carte.lec-orange .lec-puce-etat{background:#e08a00;}
+.lec-carte.lec-rouge{border-color:#c62828;}
+.lec-carte.lec-rouge .lec-puce-etat{background:#c62828;}
+.lec-carte.lec-rouge .lec-ligne{color:#c62828;}
+.lec-statut{font-weight:600;margin:8px 0;}
+.lec-statut.lec-ok{color:#2e7d32;}
+.lec-statut.lec-orange{color:#b86e00;}
+.lec-statut.lec-rouge{color:#c62828;}
+.lec-row.retard .lec-n{color:#c62828;}
+.lec-row.auj{background:rgba(224,138,0,.12);border-radius:8px;padding-left:6px;padding-right:6px;}
+.lec-tag{font-size:11px;font-weight:700;color:#b86e00;text-transform:uppercase;}
+.lec-tag.rouge{color:#c62828;}
+.lec-debut{margin:8px 0;}

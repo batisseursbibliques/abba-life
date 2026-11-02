@@ -1,6 +1,6 @@
-const CACHE_NAME = "abba-life-v11";
+const CACHE_NAME = "abba-life-v12";
 const ASSETS = [
-  "./", "./index.html", "./style.css", "./i18n.js", "./lang/en.json", "./app.js", "./sync.js", "./firebase-config.js",
+  "./", "./index.html", "./style.css", "./i18n.js", "./lang/en.json", "./bible.js", "./lecture.js", "./voixNative.js", "./app.js", "./sync.js", "./firebase-config.js",
   "./manifest.json", "./logo.png", "./icon-192.png", "./icon-512.png",
   // Le SDK Firebase lui-même (fichiers statiques et versionnés) : indispensable pour que
   // l'app puisse même démarrer hors connexion, avant toute synchronisation.

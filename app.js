@@ -477,6 +477,7 @@ function goToTab(name) {
   if (name === "accueil") renderDashboard();
   if (name === "coordination") renderCoordination();
   if (name === "agenda") renderAgendaPanel();
+  if (name === "bible") window.dispatchEvent(new Event("abba:bible-ouvert"));
   window.scrollTo({ top: 0, behavior: "instant" in window ? "instant" : "auto" });
 }
 function setupGotoLinks() {
@@ -535,6 +536,20 @@ function renderSpiritualPanel() {
     wrap.appendChild(catEl);
   });
 }
+
+// Quand un jour du calendrier de lecture est coché, « Lecture biblique du jour » se coche aussi pour aujourd'hui
+window.addEventListener("abba-lecture-faite", () => {
+  try {
+    const existe = SPIRITUAL_CATEGORIES.some(c => c.items.some(i => i.id === "e1"));
+    if (!existe) return;
+    const d = todayStr(), mk = monthKeyOf(d);
+    ensureMonthLoaded(mk).then(() => {
+      if (DATA.spiritual[d] && DATA.spiritual[d].e1) return;
+      toggleSpiritItem(d, "e1", true);
+      renderSpiritualPanel(); renderDashboard();
+    });
+  } catch (e) { /* sans gravité */ }
+});
 
 function toggleSpiritItem(dateStr, itemId, value) {
   const mk = monthKeyOf(dateStr);
