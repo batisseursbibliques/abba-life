@@ -220,9 +220,7 @@ document.addEventListener("DOMContentLoaded", () => {
   setupPostesSettings();
   setupDettes();
   setupAuthScreen();
-  setupCoordination();
   setupChecklistEditor();
-  setupAdminManager();
   setupAgenda();
 
   if ("serviceWorker" in navigator) {
@@ -322,7 +320,7 @@ async function onAuthChanged(user) {
   document.getElementById("app").style.display = "";
   document.getElementById("accountEmailHint").textContent = `Connecté(e) en tant que ${user.displayName || user.email} (${user.email})`;
 
-  // Charge le profil (nom, téléphone) une seule fois — utilisé pour le résumé envoyé aux coordinateurs
+  // Charge le profil (prénom) une seule fois
   try {
     CURRENT_PROFILE = await window.AbbaSync.getUserProfile(user.uid) || {};
   } catch (err) {
@@ -340,18 +338,13 @@ async function onAuthChanged(user) {
       : "Bienvenue dans ABBA Life 👋";
   }
 
-  // Écoute en direct la liste des coordinateurs (modifiable depuis l'app)
+  // Droit de modifier la checklist partagée : lecture seule de la liste des coordinateurs (gérée dans Gestion)
   unsubAdmins = window.AbbaSync.watchAdmins(async (emails) => {
     ADMIN_LIST = emails || [];
     const isBootstrap = window.AbbaSync.isAdminEmail(user.email);
     const inDynamicList = ADMIN_LIST.map(e => e.toLowerCase()).includes(user.email.toLowerCase());
     IS_ADMIN = isBootstrap || inDynamicList;
-    // Auto-amorçage : si tu es le coordinateur de secours et pas encore dans la liste, on t'y ajoute
-    if (isBootstrap && !inDynamicList) {
-      window.AbbaSync.ensureAdminSeed(user.email).catch(err => console.error("Amorçage admin :", err));
-    }
     document.querySelectorAll(".admin-only").forEach(el => { el.style.display = IS_ADMIN ? "" : "none"; });
-    renderAdminManager();
   });
 
   // Écoute en direct la checklist partagée
@@ -475,7 +468,6 @@ function goToTab(name) {
   });
   if (name === "historique") renderHistorique();
   if (name === "accueil") renderDashboard();
-  if (name === "coordination") renderCoordination();
   if (name === "agenda") renderAgendaPanel();
   if (name === "bible") window.dispatchEvent(new Event("abba:bible-ouvert"));
   window.scrollTo({ top: 0, behavior: "instant" in window ? "instant" : "auto" });
@@ -568,114 +560,16 @@ function dayPercent(dateStr) {
 }
 
 /* ============================================================
-   RÉSUMÉ POUR LES COORDINATEURS
+   RÉSUMÉ DU PARCOURS (nom, e-mail, modules faits — rien d'autre)
    ============================================================ */
 function pushSummary() {
   if (!CURRENT_USER) return;
-  const last7 = [];
-  for (let i = 6; i >= 0; i--) last7.push(dayPercent(addDays(todayStr(), -i)));
-  // La série compte les jours passés réellement complets (hier et avant), et n'ajoute
-  // aujourd'hui que s'il est déjà à 80% ou plus — sans jamais effacer une vraie série
-  // juste parce que la journée en cours n'est pas encore terminée.
-  let streak = 0;
-  for (let i = 1; i < 60; i++) {
-    if (dayPercent(addDays(todayStr(), -i)) >= 80) streak++; else break;
-  }
-  if (dayPercent(todayStr()) >= 80) streak++;
   window.AbbaSync.saveSummary(CURRENT_USER.uid, {
     nom: CURRENT_USER.displayName || CURRENT_USER.email,
     email: CURRENT_USER.email,
-    telephone: CURRENT_PROFILE.telephone || "",
-    pctToday: dayPercent(todayStr()),
     modulesFaits: MODULES_TERMINES.length,
     modulesTotal: (MODULES_CONFIG && MODULES_CONFIG.length) || 0,
-    last7,
-    streak,
-  }).catch(err => console.error("Résumé coordination :", err));
-}
-
-/* ============================================================
-   GESTION DES COORDINATEURS (coordinateurs uniquement)
-   ============================================================ */
-function setupAdminManager() {
-  document.getElementById("addAdminForm").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const input = document.getElementById("newAdminEmail");
-    const errEl = document.getElementById("adminManagerError");
-    errEl.textContent = "";
-    const email = input.value.trim();
-    if (!email) return;
-    try {
-      await window.AbbaSync.addAdmin(email, CURRENT_USER.email);
-      input.value = "";
-    } catch (err) {
-      errEl.textContent = "Impossible d'ajouter ce coordinateur. Vérifie ta connexion.";
-      console.error(err);
-    }
-  });
-}
-function renderAdminManager() {
-  if (!IS_ADMIN) return;
-  const wrap = document.getElementById("adminList");
-  wrap.innerHTML = "";
-  if (ADMIN_LIST.length === 0) {
-    wrap.innerHTML = `<p class="empty-hint" style="display:block;">Aucun coordinateur enregistré pour l'instant.</p>`;
-  }
-  ADMIN_LIST.forEach(email => {
-    const isSelf = CURRENT_USER && email.toLowerCase() === CURRENT_USER.email.toLowerCase();
-    const row = document.createElement("div");
-    row.className = "editor-item-row";
-    row.innerHTML = `
-      <span class="text-input" style="border:none;padding:8px 0;">${escapeAttr(email)}${isSelf ? " (toi)" : ""}</span>
-      ${isSelf ? "" : `<button type="button" class="editor-del-item" title="Retirer">🗑</button>`}
-    `;
-    if (!isSelf) {
-      row.querySelector(".editor-del-item").addEventListener("click", async () => {
-        if (!confirm(`Retirer ${email} de la liste des coordinateurs ?`)) return;
-        try {
-          await window.AbbaSync.removeAdmin(email);
-        } catch (err) {
-          alert("Impossible de retirer ce coordinateur. Vérifie ta connexion.");
-          console.error(err);
-        }
-      });
-    }
-    wrap.appendChild(row);
-  });
-}
-
-/* ============================================================
-   COORDINATION (coordinateurs uniquement)
-   ============================================================ */
-function setupCoordination() {
-  document.getElementById("refreshCoordination").addEventListener("click", renderCoordination);
-}
-async function renderCoordination() {
-  if (!IS_ADMIN) return;
-  const body = document.getElementById("coordTableBody");
-  const emptyHint = document.getElementById("coordEmptyHint");
-  body.innerHTML = `<tr><td colspan="5">Chargement…</td></tr>`;
-  try {
-    const rows = await window.AbbaSync.loadAllSummaries();
-    rows.sort((a, b) => (b.pctToday || 0) - (a.pctToday || 0));
-    body.innerHTML = "";
-    emptyHint.style.display = rows.length === 0 ? "block" : "none";
-    rows.forEach(r => {
-      const moy7 = r.last7 && r.last7.length ? Math.round(r.last7.reduce((s,v)=>s+v,0) / r.last7.length) : 0;
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${r.nom || r.email || "—"}</td>
-        <td>${r.telephone || "—"}</td>
-        <td>${r.pctToday || 0}%</td>
-        <td>${moy7}%</td>
-        <td>${r.streak || 0} j</td>
-      `;
-      body.appendChild(tr);
-    });
-  } catch (err) {
-    body.innerHTML = `<tr><td colspan="5">Erreur de chargement.</td></tr>`;
-    console.error(err);
-  }
+  }).catch(err => console.error("Résumé du Parcours :", err));
 }
 
 /* ============================================================

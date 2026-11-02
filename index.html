@@ -79,7 +79,6 @@
     <button class="tab" data-tab="finance"><span class="tab-num">III</span>Finance</button>
     <button class="tab" data-tab="historique"><span class="tab-num">IV</span>Historique</button>
     <button class="tab" data-tab="agenda"><span class="tab-num">VII</span>Agenda</button>
-    <button class="tab admin-only" data-tab="coordination" id="tabCoordination" style="display:none;"><span class="tab-num">★</span>Coordination</button>
     <button class="tab" data-tab="apropos"><span class="tab-num">VI</span>Connaître ABBA</button>
     <button class="tab" data-tab="reglages"><span class="tab-num">V</span>Réglages</button>
   </nav>
@@ -316,22 +315,6 @@
       </div>
     </section>
 
-    <!-- ================= COORDINATION (coordinateurs) ================= -->
-    <section class="panel" id="panel-coordination">
-      <div class="panel-head">
-        <h1>Coordination</h1>
-        <button class="btn-secondary" id="refreshCoordination">Actualiser</button>
-      </div>
-      <p class="settings-hint">Régularité spirituelle des Bâtisseurs (7 derniers jours). Les données financières restent privées à chacun.</p>
-      <div class="card">
-        <table class="tx-table" id="coordTable">
-          <thead><tr><th>Bâtisseur</th><th>Téléphone</th><th>Aujourd'hui</th><th>7 jours</th><th>Série</th></tr></thead>
-          <tbody id="coordTableBody"></tbody>
-        </table>
-        <p class="empty-hint" id="coordEmptyHint">Aucun Bâtisseur pour l'instant.</p>
-      </div>
-    </section>
-
     <!-- ================= CONNAÎTRE ABBA ================= -->
     <section class="panel" id="panel-apropos">
       <div class="card">
@@ -439,20 +422,6 @@
         </form>
       </div>
 
-      <div class="card settings-card admin-only" id="adminManagerCard" style="display:none;">
-        <p class="eyebrow">Coordinateurs</p>
-        <p class="settings-hint">Les personnes listées ici ont accès à l'onglet Coordination et peuvent modifier la checklist et cette liste.</p>
-        <div id="adminList"></div>
-        <form id="addAdminForm" class="field" style="margin-top:10px;">
-          <span>Ajouter un coordinateur (e-mail)</span>
-          <div style="display:flex;gap:8px;">
-            <input type="email" id="newAdminEmail" placeholder="exemple@gmail.com" required style="flex:1;">
-            <button type="submit" class="btn-primary">Ajouter</button>
-          </div>
-        </form>
-        <p class="auth-error" id="adminManagerError"></p>
-      </div>
-
       <div class="card settings-card admin-only" id="checklistEditorCard" style="display:none;">
         <p class="eyebrow">Checklist spirituelle (visible par tous les Bâtisseurs)</p>
         <p class="settings-hint">Modifie les catégories et les éléments à cocher chaque jour. Enregistré ici, ça se met à jour pour tout le monde.</p>
@@ -518,10 +487,6 @@
     <button class="bnav-btn" data-tab="agenda">
       <svg viewBox="0 0 24 24" width="20" height="20"><rect x="4" y="5" width="16" height="15" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M4 9.5 H20 M8 3 V6.5 M16 3 V6.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M8 13 L11 16 L16.5 10.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
       <span>Agenda</span>
-    </button>
-    <button class="bnav-btn admin-only" data-tab="coordination" id="bnavCoordination" style="display:none;">
-      <svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 2 L14.5 9 L22 9 L16 13.5 L18 21 L12 16.5 L6 21 L8 13.5 L2 9 L9.5 9 Z" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>
-      <span>Coord.</span>
     </button>
     <button class="bnav-btn" data-tab="apropos">
       <svg viewBox="0 0 24 24" width="20" height="20"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12 8 V13 M12 16 V16.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>

@@ -159,13 +159,9 @@ async function migrateLegacyIfNeeded(uid) {
   await setDoc(migFlagRef, { done: true, at: serverTimestamp() });
 }
 
-/* ---------- RÉSUMÉ POUR LES COORDINATEURS ---------- */
+/* ---------- RÉSUMÉ DU PARCOURS (nom, e-mail, modules faits) ---------- */
 async function saveSummary(uid, summary) {
   await setDoc(doc(db, "summaries", uid), { ...summary, updatedAt: serverTimestamp() }, { merge: true });
-}
-async function loadAllSummaries() {
-  const snap = await getDocs(collection(db, "summaries"));
-  return snap.docs.map(d => ({ uid: d.id, ...d.data() }));
 }
 
 /* ---------- CHECKLIST SPIRITUELLE PARTAGÉE ---------- */
@@ -178,23 +174,11 @@ async function saveChecklist(categories) {
   await setDoc(doc(db, "config", "checklist"), { categories, updatedAt: serverTimestamp() });
 }
 
-/* ---------- COORDINATEURS (liste modifiable depuis l'app) ---------- */
+/* ---------- COORDINATEURS (lecture seule : la liste se gère dans Gestion) ---------- */
 function watchAdmins(callback) {
   return onSnapshot(collection(db, "admins"), (snap) => {
     callback(snap.docs.map(d => d.id));
   }, (err) => console.error("watchAdmins:", err));
-}
-async function addAdmin(email, addedByEmail) {
-  const id = email.trim().toLowerCase();
-  await setDoc(doc(db, "admins", id), { addedBy: addedByEmail, addedAt: serverTimestamp() });
-}
-async function removeAdmin(email) {
-  const id = email.trim().toLowerCase();
-  await deleteDoc(doc(db, "admins", id));
-}
-async function ensureAdminSeed(email) {
-  const id = email.trim().toLowerCase();
-  await setDoc(doc(db, "admins", id), { addedBy: "bootstrap", addedAt: serverTimestamp() }, { merge: true });
 }
 
 /* Calendrier de lecture de la Bible : même emplacement que dans le Parcours (formation/{uid}/lecture/{plan}),
@@ -218,7 +202,7 @@ window.AbbaSync = {
   watchParcours, saveParcours,
   watchMonth, getMonthOnce, saveMonth, loadAllMonths, deleteAllMonths,
   migrateLegacyIfNeeded,
-  saveSummary, loadAllSummaries,
+  saveSummary,
   watchChecklist, saveChecklist,
-  watchAdmins, addAdmin, removeAdmin, ensureAdminSeed,
+  watchAdmins,
 };

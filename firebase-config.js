@@ -16,8 +16,7 @@ export const firebaseConfig = {
   appId: "1:1057124245132:web:907b910f80109c8c8925a9",
 };
 
-// Adresses e-mail des coordinateurs : accès à l'onglet "Coordination" (vue collective)
-// et au droit de modifier la checklist spirituelle partagée.
+// Adresses e-mail des coordinateurs : droit de modifier la checklist spirituelle partagée.
 // ⚠️ Cette liste DOIT être identique à celle du fichier firestore.rules.
 export const ADMIN_EMAILS = [
   "apotrepaulabba@gmail.com",
