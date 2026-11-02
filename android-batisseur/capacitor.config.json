@@ -1,0 +1,22 @@
+{
+  "appId": "org.batisseursbibliques.batisseur",
+  "appName": "ABBA Bâtisseur",
+  "webDir": "www",
+  "server": {
+    "url": "https://batisseursbibliques.org/abba-batisseur/",
+    "androidScheme": "https",
+    "allowNavigation": [
+      "batisseursbibliques.org",
+      "*.batisseursbibliques.org",
+      "*.firebaseapp.com",
+      "*.googleapis.com",
+      "*.gstatic.com"
+    ]
+  },
+  "plugins": {
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_abba",
+      "iconColor": "#B8962E"
+    }
+  }
+}

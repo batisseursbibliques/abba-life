@@ -1,0 +1,50 @@
+name: Construire l'application Android ABBA Bâtisseur (APK)
+
+# L'APK est publié dans « Releases » de ce dépôt public : c'est le lien de téléchargement pour les membres
+# (Firebase Hosting gratuit n'accepte pas les fichiers exécutables comme un APK).
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['android-batisseur/**', '.github/workflows/apk-batisseur.yml']
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Préparer la clé de signature (secret GitHub)
+        env:
+          KS: ${{ secrets.ABBA_KEYSTORE_B64 }}
+        run: |
+          if [ -z "$KS" ]; then echo "::error::Secret ABBA_KEYSTORE_B64 absent"; exit 1; fi
+          echo "$KS" | base64 -d > "$RUNNER_TEMP/abba.p12"
+          echo "ABBA_KEYSTORE_PATH=$RUNNER_TEMP/abba.p12" >> "$GITHUB_ENV"
+      - name: Construire l'APK
+        env:
+          ABBA_KEYSTORE_PASSWORD: ${{ secrets.ABBA_KEYSTORE_PASSWORD }}
+        working-directory: android-batisseur
+        run: |
+          set -o pipefail
+          ( npm install && npx cap add android && node patch.js && cd android && chmod +x gradlew && ./gradlew assembleDebug --no-daemon ) 2>&1 | tee ../build.log
+      - name: Publier l'APK (Releases)
+        if: success()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cp android-batisseur/android/app/build/outputs/apk/debug/app-debug.apk ABBA-Batisseur.apk
+          gh release delete latest --yes --cleanup-tag 2>/dev/null || true
+          gh release create latest ABBA-Batisseur.apk --title "ABBA Bâtisseur (Android)" --notes "Dernière version de l'application Android ABBA Bâtisseur : Life, Formation et Mise en Action, avec les rappels de prière." --latest
+      - name: Journal de construction (en cas d'échec)
+        if: failure()
+        run: tail -n 60 build.log || true
