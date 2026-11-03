@@ -771,3 +771,11 @@ button.tts-mini-t{background:none;border:none;color:inherit;font:inherit;font-si
 .plan-fini{color:#1a7f37;margin:8px 0 0;}
 .plan-suppr{margin-top:8px;font-size:12px;}
 .plan-form{display:grid;gap:10px;}
+.plan-carte > summary,.plan-form > summary{cursor:pointer;list-style:none;display:flex;flex-direction:column;gap:2px;}
+.plan-carte > summary::-webkit-details-marker,.plan-form > summary::-webkit-details-marker{display:none;}
+.plan-carte > summary::after,.plan-form > summary::after{content:"▾";position:absolute;right:14px;top:14px;color:var(--ink-soft);}
+.plan-carte,.plan-form{position:relative;}
+.plan-carte[open] > summary::after,.plan-form[open] > summary::after{content:"▴";}
+.plan-titre{font-weight:700;color:var(--navy);padding-right:24px;}
+.plan-resume{font-size:12.5px;color:var(--ink-soft);}
+.plan-carte[open] > summary,.plan-form[open] > summary{margin-bottom:8px;}

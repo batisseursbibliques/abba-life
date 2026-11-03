@@ -1,4 +1,4 @@
-const CACHE_NAME = "abba-life-v26";
+const CACHE_NAME = "abba-life-v27";
 const ASSETS = [
   "./", "./index.html", "./style.css", "./i18n.js", "./lang/en.json", "./bible.js", "./lecture.js", "./plans.js", "./voixNative.js", "./app.js", "./sync.js", "./firebase-config.js",
   "./manifest.json", "./logo.png", "./icon-192.png", "./icon-512.png",

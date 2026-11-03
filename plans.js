@@ -23,7 +23,7 @@ const MODELES = {
   proverbes: { fr: "Les Proverbes en 31 jours", en: "Proverbs in 31 days", livreDebut: 20, livreFin: 20, nbJours: 31 },
 };
 
-const P = { user: null, plans: [], chapitres: null, boite: null, unsub: null, modele: "nt90", perso: { titre: "", livreDebut: 40, livreFin: 66, nbJours: 90 }, debut: null, info: "", infoErreur: false, aSupprimer: null, ntOuvert: false };
+const P = { user: null, plans: [], chapitres: null, boite: null, unsub: null, modele: "nt90", perso: { titre: "", livreDebut: 40, livreFin: 66, nbJours: 90 }, debut: null, info: "", infoErreur: false, aSupprimer: null, ntOuvert: false, ouverts: {}, formOuvert: false };
 
 /* ---------- Calculs (identiques à ceux de Gestion) ---------- */
 const plage = (a, b) => { const l = []; for (let x = a; x <= b; x++) for (let c = 1; c <= P.chapitres[x - 1]; c++) l.push([x, c]); return l; };
@@ -65,7 +65,8 @@ function carte(p, auj) {
   const lecture = lectureDuJour(p, jour);
   const fait = p.joursFaits.includes(jour);
   const pct = Math.round((p.joursFaits.length / p.nbJours) * 100);
-  let h = `<div class="card plan-carte"><p class="eyebrow">${esc(p.titre)}</p>`;
+  let h = `<details class="card plan-carte" data-plan="${esc(p.id)}"${P.ouverts[p.id] ? " open" : ""}><summary><span class="plan-titre">${esc(p.titre)}</span>`;
+  h += `<span class="plan-resume">${termine ? "🎉 " + T("Terminé", "Completed") : `${p.joursFaits.length} / ${p.nbJours} ${T("jours", "days")} · ${pct} %`}${retard > 0 ? ` · <span class="plan-retard">${retard} ${T("j. de retard", "d. behind")}</span>` : ""}</span></summary>`;
   h += `<div class="lec-barre" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"><span style="width:${pct}%"></span></div>`;
   h += `<p class="small">${p.joursFaits.length} / ${p.nbJours} ${T("jours lus", "days read")} (${pct} %)${pasCommence ? ` · ${T("commence le", "starts on")} ${esc(p.debut)}` : ""}`;
   if (retard > 0) h += ` · <span class="plan-retard">${retard} ${T("jour(s) de retard", "day(s) behind")}</span>`;
@@ -79,11 +80,11 @@ function carte(p, auj) {
   }
   if (P.aSupprimer === p.id) h += `<p class="small">${T("Supprimer ce plan ?", "Delete this plan?")} <button class="link-btn" data-pl="suppr-oui" data-id="${esc(p.id)}">${T("Oui", "Yes")}</button> · <button class="link-btn" data-pl="suppr-non">${T("Non", "No")}</button></p>`;
   else h += `<button class="link-btn plan-suppr" data-pl="suppr" data-id="${esc(p.id)}">${T("Supprimer le plan", "Delete plan")}</button>`;
-  return h + `</div>`;
+  return h + `</details>`;
 }
 function optionsLivres(sel) { return Array.from({ length: 66 }, (_, i) => `<option value="${i + 1}"${i + 1 === sel ? " selected" : ""}>${esc(nomLivre(i + 1))}</option>`).join(""); }
 function formulaire() {
-  let h = `<div class="card plan-form"><p class="eyebrow">${T("Nouveau plan de lecture", "New reading plan")}</p>`;
+  let h = `<details class="card plan-form" data-form${P.formOuvert ? " open" : ""}><summary><span class="plan-titre">${T("Nouveau plan de lecture", "New reading plan")}</span></summary>`;
   h += `<label class="field"><span>${T("Modèle", "Template")}</span><select class="text-input" data-pl="modele">`;
   h += Object.keys(MODELES).map((k) => `<option value="${k}"${P.modele === k ? " selected" : ""}>${esc(nomModele(k))}</option>`).join("");
   h += `<option value="perso"${P.modele === "perso" ? " selected" : ""}>${T("Plan personnalisé…", "Custom plan…")}</option></select></label>`;
@@ -96,7 +97,7 @@ function formulaire() {
   h += `<label class="field"><span>${T("Date de début", "Start date")}</span><input class="text-input" type="date" data-pl="debut" value="${esc(P.debut || today())}"></label>`;
   h += `<button class="btn-primary" data-pl="creer">${T("Créer le plan", "Create plan")}</button>`;
   if (P.info) h += `<p class="small" style="color:${P.infoErreur ? "#b42318" : "#1a7f37"}">${esc(P.info)}</p>`;
-  return h + `</div>`;
+  return h + `</details>`;
 }
 function rendre() {
   const box = P.boite; if (!box || !box.isConnected) return;
@@ -104,7 +105,7 @@ function rendre() {
   if (!P.chapitres) { box.innerHTML = `<p class="bib-alerte">${T("Impossible de charger la Bible. Vérifie ta connexion puis rouvre cet onglet.", "The Bible could not be loaded. Check your connection and reopen this tab.")}</p>`; return; }
   const auj = today();
   let h = P.plans.length ? P.plans.map((p) => carte(p, auj)).join("")
-    : `<p class="small">${T("Tu n'as pas encore de plan de lecture. Crée-en un ci-dessous.", "You don't have a reading plan yet. Create one below.")}</p>`;
+    : `<p class="small">${T("Tu n'as pas encore de plan de lecture. Ouvre « Nouveau plan de lecture » ci-dessous pour en créer un.", "You don't have a reading plan yet. Open “New reading plan” below to create one.")}</p>`;
   h += formulaire();
   h += `<details class="lec-intro card" data-nt${P.ntOuvert ? " open" : ""}><summary><strong>${T("Calendrier du Nouveau Testament (plan ABBA, 6 mois)", "New Testament calendar (ABBA plan, 6 months)")}</strong></summary><div id="ntBox"></div></details>`;
   // On ne touche pas aux champs en cours de saisie : on ne redessine pas pendant qu'on écrit
@@ -170,8 +171,10 @@ document.addEventListener("input", (ev) => {
 });
 document.addEventListener("toggle", (ev) => {
   const d = ev.target;
-  if (!(d instanceof HTMLElement) || !P.boite || !P.boite.contains(d) || !d.matches("[data-nt]")) return;
-  P.ntOuvert = d.open; if (d.open) montrerNT();
+  if (!(d instanceof HTMLElement) || !P.boite || !P.boite.contains(d)) return;
+  if (d.matches("[data-nt]")) { P.ntOuvert = d.open; if (d.open) montrerNT(); }
+  else if (d.matches("[data-plan]")) P.ouverts[d.dataset.plan] = d.open;
+  else if (d.matches("[data-form]")) P.formOuvert = d.open;
 }, true);
 
 window.AbbaLecture = {
