@@ -748,3 +748,15 @@ html.i18n-wait body{visibility:hidden;}
 .home-hello-name{font-size:18px;font-weight:700;color:var(--navy);margin:0 0 2px;}
 .home-hello-text{font-size:13px;color:var(--ink-soft);margin:0 0 4px;line-height:1.45;}
 .home-hello .link-btn{padding-left:0;font-size:13px;}
+
+/* ===== Lecteur flottant de la Bible (identique au Parcours) ===== */
+.btn-compact{padding:6px 12px !important;font-size:13px !important;}
+.tts-mini{position:fixed;left:10px;right:10px;bottom:calc(env(safe-area-inset-bottom,0px) + 74px);z-index:70;background:var(--navy);color:#fff;border-radius:16px;padding:8px 10px;display:flex;align-items:center;gap:8px;box-shadow:0 6px 20px rgba(0,0,0,.28);flex-wrap:wrap;}
+.tts-mini[hidden]{display:none;}
+.tts-mini-t{flex:1;min-width:90px;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tts-mini-m{flex-basis:100%;font-size:11px;opacity:.85;}
+.tts-btn{width:38px;height:38px;border-radius:50%;border:none;background:rgba(255,255,255,.16);color:#fff;font-size:17px;cursor:pointer;}
+.tts-btn.on{background:#E8A33D;color:#1a1a1a;}
+.tts-rate{background:rgba(255,255,255,.16);color:#fff;border:none;border-radius:10px;padding:8px 6px;font-size:12px;}
+.tts-rate option{color:#000;}
+button.tts-mini-t{background:none;border:none;color:inherit;font:inherit;font-size:13px;font-weight:600;text-align:left;cursor:pointer;padding:0;}
