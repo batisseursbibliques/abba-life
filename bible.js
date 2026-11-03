@@ -51,15 +51,28 @@ let indexCache = null;
 const livresCache = {};
 const xrefCache = {};
 
+let protegeesIds = new Set();
+async function metasProtegees() {
+  // Versions réservées que le PPV a rendues visibles aux Bâtisseurs ; la liste est gardée pour le hors connexion
+  try {
+    if (window.AbbaSync?.loadBibleMetas) { const l = await window.AbbaSync.loadBibleMetas(); ecrireLocal("metasProt", l); return l; }
+  } catch { /* pas connecté ou pas de réseau */ }
+  return (await lireLocal("metasProt")) || [];
+}
 async function chargerIndex() {
   if (indexCache) return indexCache;
+  let base;
   try {
-    indexCache = await (await fetch(`${BASE}/index.json`)).json();
-    ecrireLocal("index", indexCache);
+    base = await (await fetch(`${BASE}/index.json`)).json();
+    ecrireLocal("index", base);
   } catch (err) {
-    indexCache = await lireLocal("index");
-    if (!indexCache) throw err;
+    base = await lireLocal("index");
+    if (!base) throw err;
   }
+  const prot = await metasProtegees();
+  protegeesIds = new Set(prot.map((m) => m.id));
+  indexCache = { ...base, versions: [...base.versions, ...prot.filter((m) => !base.versions.some((v) => v.id === m.id))
+    .map((m) => ({ id: m.id, nom: m.nom, langue: m.langue, licence: m.credit || m.licence || "", protegee: true }))] };
   return indexCache;
 }
 async function chargerLivre(version, numero) {
@@ -67,6 +80,17 @@ async function chargerLivre(version, numero) {
   if (livresCache[cle]) return livresCache[cle];
   const local = await lireLocal(`s:${cle}`);
   if (local) { livresCache[cle] = local; return local; }
+  if (protegeesIds.has(version)) {
+    // Version réservée : le livre est lu dans la base (puis gardé sur le téléphone)
+    let d;
+    try { d = await window.AbbaSync.loadBibleLivre(`${version}_${nn(numero)}`); } catch { throw new Error(msgPasTelecharge()); }
+    if (!d) throw new Error(T("Livre indisponible", "Book unavailable"));
+    const out = [];
+    Object.keys(d.chapitres || {}).forEach((k) => { out[Number(k) - 1] = d.chapitres[k]; });
+    for (let i = 0; i < out.length; i++) if (!out[i]) out[i] = [];
+    livresCache[cle] = out; ecrireLocal(`s:${cle}`, out);
+    return out;
+  }
   let r;
   try { r = await fetch(`${BASE}/${version}/${nn(numero)}.json`); } catch { throw new Error(msgPasTelecharge()); }
   if (!r.ok) throw new Error(navigator.onLine === false ? msgPasTelecharge() : T("Livre indisponible", "Book unavailable"));
@@ -463,7 +487,7 @@ async function telechargerTout() {
   Object.assign(dl, { phase: "encours", fait: 0, total: 0, echecs: 0 });
   try { navigator.storage?.persist?.(); } catch { /* ignoré */ }
   const taches = [];
-  for (const v of S.index.versions) for (let n = 1; n <= 66; n++) taches.push({ cle: `s:${v.id}/${n}`, url: `${BASE}/${v.id}/${nn(n)}.json` });
+  for (const v of S.index.versions.filter((x) => !x.protegee)) for (let n = 1; n <= 66; n++) taches.push({ cle: `s:${v.id}/${n}`, url: `${BASE}/${v.id}/${nn(n)}.json` });
   for (let n = 1; n <= 66; n++) taches.push({ cle: `x2:${n}`, url: `${BASE}/xref/${nn(n)}.json` });
   dl.total = taches.length;
   rendreOptions();
