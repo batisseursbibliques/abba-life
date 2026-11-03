@@ -760,3 +760,14 @@ html.i18n-wait body{visibility:hidden;}
 .tts-rate{background:rgba(255,255,255,.16);color:#fff;border:none;border-radius:10px;padding:8px 6px;font-size:12px;}
 .tts-rate option{color:#000;}
 button.tts-mini-t{background:none;border:none;color:inherit;font:inherit;font-size:13px;font-weight:600;text-align:left;cursor:pointer;padding:0;}
+
+/* ===== Mes plans de lecture ===== */
+.plan-carte{margin-bottom:12px;}
+.plan-jour{background:var(--paper);border-radius:10px;padding:10px 12px;margin-top:8px;}
+.plan-lecture{font-weight:600;margin:2px 0 8px;font-size:17px;}
+.plan-actions{display:flex;gap:8px;flex-wrap:wrap;}
+.plan-deux{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
+.plan-retard{color:#b3342d;}
+.plan-fini{color:#1a7f37;margin:8px 0 0;}
+.plan-suppr{margin-top:8px;font-size:12px;}
+.plan-form{display:grid;gap:10px;}

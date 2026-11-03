@@ -518,7 +518,7 @@ function squelette() {
     <div class="bib-onglets">
       <button class="bib-onglet" data-bib="vue-lire">📖 ${T("Lire", "Read")}</button>
       <button class="bib-onglet" data-bib="vue-chercher">🔍 ${T("Rechercher", "Search")}</button>
-      <button class="bib-onglet" data-bib="vue-plan">📅 ${T("Calendrier", "Calendar")}</button>
+      <button class="bib-onglet" data-bib="vue-plan">📅 ${T("Mes plans", "My plans")}</button>
     </div>
     <div id="bibLire">
       <div id="bibBarre" class="bib-barre"></div>

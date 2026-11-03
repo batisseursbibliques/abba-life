@@ -64,6 +64,16 @@ async function saveAgenda(uid, tasks) {
   await setDoc(doc(db, "users", uid, "priv", "agenda"), { tasks });
 }
 
+/* ---------- PLANS DE LECTURE (espace privé, toujours en direct) ---------- */
+function watchPlans(uid, callback) {
+  return onSnapshot(doc(db, "users", uid, "priv", "plans"), (snap) => {
+    callback(snap.exists() ? (snap.data().list || []) : []);
+  }, (err) => console.error("watchPlans:", err));
+}
+async function savePlans(uid, list) {
+  await setDoc(doc(db, "users", uid, "priv", "plans"), { list });
+}
+
 /* ---------- DETTES (petit document, toujours en direct) ---------- */
 function watchDettes(uid, callback) {
   return onSnapshot(doc(db, "users", uid, "priv", "dettes"), (snap) => {
@@ -198,7 +208,7 @@ async function loadBibleLivre(cle) {
 }
 
 window.AbbaSync = {
-  loadBibleMetas, loadBibleLivre,
+  loadBibleMetas, loadBibleLivre, watchPlans, savePlans,
   watchLecture, saveLecture,
   isAdminEmail,
   signUp, logIn, logOut, watchAuth, getUserProfile,

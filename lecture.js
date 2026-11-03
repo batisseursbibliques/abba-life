@@ -212,7 +212,7 @@ document.addEventListener("toggle", (ev) => {
   if (d.matches("[data-intro]")) L.intro = d.open;
 }, true);
 
-window.AbbaLecture = {
+window.AbbaCalendrierNT = {
   prochain: prochainInfo,
   demarrer: async () => { if (L.user && L.plan && !(L.prog && L.prog.start)) await demarrer(); },
   marquer: async (n) => { if (L.user && L.plan && !((L.prog && L.prog.done) || {})[n]) await basculer(n); },
