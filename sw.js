@@ -1,9 +1,9 @@
-const CACHE_NAME = "abba-life-v28";
+const CACHE_NAME = "abba-life-v29";
 const ASSETS = [
   "./", "./index.html", "./style.css", "./i18n.js", "./lang/en.json", "./bible.js", "./lecture.js", "./plans.js", "./voixNative.js", "./app.js", "./sync.js", "./firebase-config.js",
   "./manifest.json", "./logo.png", "./icon-192.png", "./icon-512.png",
   // Habillage commun (même adresse que l'accueil : l'image n'est téléchargée qu'une fois pour les trois apps)
-  "/abba-batisseur/habillage.css", "/abba-batisseur/habillage.js", "/abba-batisseur/fond-accueil.webp",
+  "/abba-batisseur/habillage.css", "/abba-batisseur/habillage.js", "/abba-batisseur/barre.js", "/abba-batisseur/fond-accueil.webp",
   // Le SDK Firebase lui-même (fichiers statiques et versionnés) : indispensable pour que
   // l'app puisse même démarrer hors connexion, avant toute synchronisation.
   "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js",
