@@ -26,11 +26,14 @@ async function main() {
 `;
   if (!x.includes('FOREGROUND_SERVICE_MEDIA_PLAYBACK')) x = x.replace('<application', perms + '\n    <application');
   // Rappel quotidien : notifications locales programmées (alarmes) + reprogrammation après redémarrage
+  // Android 13 et plus : USE_EXACT_ALARM est accordée automatiquement à l'installation (rappels à la minute près, sans réglage).
+  // Android 12 : SCHEDULE_EXACT_ALARM est accordée par défaut.
   const alarmes = `
-    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 `;
-  if (!x.includes('SCHEDULE_EXACT_ALARM')) x = x.replace('<application', alarmes + '\n    <application');
+  if (!x.includes('USE_EXACT_ALARM')) x = x.replace('<application', alarmes + '\n    <application');
   if (!x.includes('.VoixService')) x = x.replace('</application>', '    <service android:name=".VoixService" android:exported="false" android:foregroundServiceType="mediaPlayback" />\n    </application>');
   fs.writeFileSync(man, x);
 
@@ -84,6 +87,13 @@ async function main() {
             storeType 'pkcs12'
         }
     }`);
+    fs.writeFileSync(gradle, g);
+  }
+  // Numéro de version croissant (numéro d'exécution GitHub) : la mise à jour s'installe par-dessus la version précédente
+  g = fs.readFileSync(gradle, 'utf8');
+  const n = parseInt(process.env.GITHUB_RUN_NUMBER || '0', 10);
+  if (n > 0) {
+    g = g.replace(/versionCode\s+\d+/, 'versionCode ' + (100 + n)).replace(/versionName\s+"[^"]*"/, 'versionName "1.' + n + '"');
     fs.writeFileSync(gradle, g);
   }
   console.log('Projet Android préparé.');

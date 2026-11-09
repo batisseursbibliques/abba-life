@@ -272,8 +272,21 @@
             <option value="daily">Tous les jours</option>
             <option value="weekly">Chaque semaine, même jour</option>
           </select>
+          <select id="agendaRappel" class="text-input" disabled>
+            <option value="none">Pas de rappel</option>
+            <option value="0">Me rappeler à l'heure même</option>
+            <option value="15">Me rappeler 15 minutes avant</option>
+            <option value="30">Me rappeler 30 minutes avant</option>
+            <option value="60">Me rappeler 1 heure avant</option>
+          </select>
+          <p class="settings-hint" id="agendaRappelHint" style="margin:0;"></p>
           <button class="btn-primary" type="submit">Ajouter à l'agenda</button>
         </form>
+        <div id="agendaRappelTools" style="display:none;margin-top:10px;">
+          <button type="button" class="btn-secondary" id="agendaRappelTest">🔔 Tester mon rappel</button>
+          <p class="settings-hint" id="agendaRappelEtat" style="margin:8px 0 0;"></p>
+          <button type="button" class="btn-secondary" id="agendaRappelAlarmes" style="display:none;margin-top:8px;">Autoriser les alarmes exactes</button>
+        </div>
       </div>
 
       <div class="card">

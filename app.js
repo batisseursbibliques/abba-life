@@ -5,6 +5,8 @@
    hors connexion. Voir sync.js pour la couche Firebase.
    ============================================================ */
 
+import { reprogrammer, tester as testerRappel, autoriserAlarmes } from "./rappelsAgenda.js";
+
 const STORAGE_KEY = "abbalife_data_v1";
 
 const DEFAULT_CHECKLIST = [
@@ -164,6 +166,7 @@ function saveSettingsData() {
 }
 function saveAgendaData() {
   saveLocalCache();
+  planifierRappels(false);
   if (CURRENT_USER) {
     window.AbbaSync.saveAgenda(CURRENT_USER.uid, DATA.agenda)
       .catch(err => console.error("Sauvegarde de l'agenda :", err));
@@ -389,6 +392,7 @@ async function onAuthChanged(user) {
   unsubAgenda = window.AbbaSync.watchAgenda(user.uid, (tasks) => {
     DATA.agenda = tasks || [];
     saveLocalCache();
+    planifierRappels(false);
     renderAgendaPanel();
     renderDashboard();
   });
@@ -664,9 +668,13 @@ function setupAgenda() {
     const date = document.getElementById("agendaDate").value;
     const time = document.getElementById("agendaTime").value;
     const recurrence = document.getElementById("agendaRecurrence").value;
+    const rv = document.getElementById("agendaRappel").value;
+    const rappel = time && rv !== "none" ? Number(rv) : null;
     if (!title || !date) return;
-    addAgendaTask(title, date, time, "manual", recurrence);
+    addAgendaTask(title, date, time, "manual", recurrence, rappel);
+    if (rappel !== null) planifierRappels(true);   // la demande d'autorisation des notifications se fait ici, après un geste de la personne
     document.getElementById("agendaAddForm").reset();
+    majChampRappel();
     document.getElementById("agendaDate").value = todayStr();
     renderAgendaPanel();
     renderDashboard();
@@ -675,13 +683,64 @@ function setupAgenda() {
   // Pré-remplit la date d'ajout rapide avec aujourd'hui
   const dateInput = document.getElementById("agendaDate");
   if (dateInput) dateInput.value = todayStr();
+
+  // Rappels : le choix n'est possible qu'avec une heure
+  document.getElementById("agendaTime").addEventListener("input", majChampRappel);
+  document.getElementById("agendaTime").addEventListener("change", majChampRappel);
+  majChampRappel();
+  const natif = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+  document.getElementById("agendaRappelTools").style.display = natif ? "" : "none";
+  document.getElementById("agendaRappelTest").addEventListener("click", async () => {
+    const r = await testerRappel(EN_ ? "en" : "fr");
+    afficherEtatRappels(r, true);
+  });
+  document.getElementById("agendaRappelAlarmes").addEventListener("click", () => { autoriserAlarmes(); });
 }
 
-function addAgendaTask(title, date, time, source, recurrence) {
+/* ---------- Rappels de l'agenda (notifications sur le téléphone, application Android) ---------- */
+let rappelTimer = null, rappelDemander = false;
+function planifierRappels(demander) {
+  rappelDemander = rappelDemander || !!demander;
+  clearTimeout(rappelTimer);
+  rappelTimer = setTimeout(async () => {
+    const d = rappelDemander; rappelDemander = false;
+    try { afficherEtatRappels(await reprogrammer(DATA.agenda, { demander: d, lang: EN_ ? "en" : "fr" }), false); }
+    catch (e) { console.error("rappels:", e); }
+  }, 400);
+}
+function majChampRappel() {
+  const heure = document.getElementById("agendaTime"), sel = document.getElementById("agendaRappel"), hint = document.getElementById("agendaRappelHint");
+  if (!heure || !sel || !hint) return;
+  const natif = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+  sel.disabled = !heure.value;
+  if (!heure.value) sel.value = "none";
+  hint.textContent = !heure.value ? (EN_ ? "Choose a time to be able to set a reminder." : "Choisis une heure pour pouvoir demander un rappel.")
+    : natif ? (EN_ ? "🔔 The reminder rings on your phone, even when the app is closed." : "🔔 Le rappel sonne sur ton téléphone, même application fermée.")
+    : (EN_ ? "Reminders work in the ABBA Bâtisseur Android app." : "Les rappels fonctionnent dans l'application Android ABBA Bâtisseur.");
+}
+function afficherEtatRappels(r, apresTest) {
+  const el = document.getElementById("agendaRappelEtat"), bt = document.getElementById("agendaRappelAlarmes");
+  if (!el || !r) return;
+  const M = {
+    ok: apresTest ? (EN_ ? "Test sent: a notification should appear in about 10 seconds. If it does not, check that notifications are allowed for the app and that battery saving does not block it." : "Test envoyé : une notification doit apparaître dans une dizaine de secondes. Sinon, vérifie que les notifications sont autorisées pour l'application et que l'économie de batterie ne la bloque pas.") : "",
+    bloque: EN_ ? "Notifications are blocked for the app: allow them in the phone settings to receive reminders." : "Les notifications sont bloquées pour l'application : autorise-les dans les réglages du téléphone pour recevoir les rappels.",
+    "mise-a-jour": EN_ ? "Install the latest version of the app to receive reminders." : "Installe la dernière version de l'application pour recevoir les rappels.",
+    erreur: EN_ ? "Reminders could not be scheduled. Try again." : "Les rappels n'ont pas pu être programmés. Réessaie.",
+  };
+  el.textContent = r.etat === "ok" && r.exact === false
+    ? (EN_ ? "For reminders to ring on the minute, allow “Alarms & reminders” for the app." : "Pour que les rappels sonnent à la minute près, autorise « Alarmes et rappels » pour l'application.")
+    : (M[r.etat] || "");
+  if (bt) bt.style.display = r.etat === "ok" && r.exact === false ? "" : "none";
+}
+
+function addAgendaTask(title, date, time, source, recurrence, rappel) {
+  const id = "ag_" + Date.now() + "_" + Math.random().toString(36).slice(2, 7);
+  const rec = recurrence && recurrence !== "none" ? recurrence : null;
   DATA.agenda.push({
-    id: "ag_" + Date.now() + "_" + Math.random().toString(36).slice(2, 7),
-    title, date, time: time || "", done: false, source: source || "manual",
-    recurrence: recurrence && recurrence !== "none" ? recurrence : null,
+    id, title, date, time: time || "", done: false, source: source || "manual",
+    recurrence: rec,
+    ...(rec ? { serie: id } : {}),                                  // identifie la série qui se répète (une seule série de rappels)
+    ...(typeof rappel === "number" ? { rappel } : {}),              // minutes avant l'heure : 0, 15, 30 ou 60
   });
   saveAgendaData();
 }
@@ -697,6 +756,8 @@ function toggleAgendaTask(id, done) {
       id: "ag_" + Date.now() + "_" + Math.random().toString(36).slice(2, 7),
       title: t.title, date: nextDate, time: t.time, done: false, source: t.source,
       recurrence: t.recurrence,
+      serie: t.serie || t.id,
+      ...(typeof t.rappel === "number" ? { rappel: t.rappel } : {}),
     });
     t.nextGenerated = true;
   }
@@ -791,7 +852,8 @@ function renderAgendaList(wrapId, emptyId, list, markLate) {
     const row = document.createElement("div");
     row.className = "agenda-item" + (markLate ? " late" : "");
     const dateLabel = t.date === todayStr() ? "" : fmtLong(t.date) + (t.time ? " · " : "");
-    const recurBadge = t.recurrence === "daily" ? " · 🔁 tous les jours" : t.recurrence === "weekly" ? " · 🔁 chaque semaine" : "";
+    const recurBadge = (t.recurrence === "daily" ? " · 🔁 tous les jours" : t.recurrence === "weekly" ? " · 🔁 chaque semaine" : "")
+      + (typeof t.rappel === "number" ? (t.rappel === 0 ? " · 🔔 à l'heure" : t.rappel === 60 ? " · 🔔 1 h avant" : ` · 🔔 ${t.rappel} min avant`) : "");
     row.innerHTML = `
       <input type="checkbox" ${t.done ? "checked" : ""}>
       <div class="agenda-item-body">
