@@ -202,13 +202,18 @@ async function loadBibleMetas() {
   const s = await getDocs(collection(db, "bibles_meta"));
   return s.docs.map((d) => ({ id: d.id, ...d.data() })).sort((a, b) => String(a.nom).localeCompare(String(b.nom)));
 }
+// A-t-elle déjà demandé l'accès au Parcours Bâtisseur ? (document lisible par la personne seule)
+async function aDemandeParcours(uid) {
+  const s = await getDoc(doc(db, "enrollments", uid + "_parcours"));
+  return s.exists();
+}
 async function loadBibleLivre(cle) {
   const s = await getDoc(doc(db, "bibles_protegees", cle));
   return s.exists() ? s.data() : null;
 }
 
 window.AbbaSync = {
-  loadBibleMetas, loadBibleLivre, watchPlans, savePlans,
+  loadBibleMetas, loadBibleLivre, aDemandeParcours, watchPlans, savePlans,
   watchLecture, saveLecture,
   isAdminEmail,
   signUp, logIn, logOut, watchAuth, getUserProfile,

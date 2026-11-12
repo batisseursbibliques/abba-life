@@ -308,6 +308,38 @@ function allerALAccueil(extra) {
 }
 function accueilConnecte() { try { sessionStorage.removeItem("abba_redir"); } catch (e) {} }
 
+/* ---------- Rappel hebdomadaire : s'inscrire au Parcours Bâtisseur ----------
+   Une fenêtre au plus une fois par semaine, à l'entrée dans l'application.
+   Elle ne revient plus dès que la personne a demandé l'accès au Parcours (demande, accès validé ou refusé). */
+const PARCOURS_RAPPEL_JOURS = 7;
+async function rappelParcoursHebdo(user) {
+  try {
+    if (!user || IS_ADMIN || document.getElementById("parcoursRappel")) return;
+    const cle = "abba_rappel_parcours_" + user.uid;
+    const dernier = Number(localStorage.getItem(cle) || 0);
+    if (dernier === -1) return;                                   // déjà inscrite : plus jamais
+    if (dernier && Date.now() - dernier < PARCOURS_RAPPEL_JOURS * 864e5) return;
+    let deja;
+    try { deja = await window.AbbaSync.aDemandeParcours(user.uid); } catch (e) { return; }   // hors ligne : on ne dit rien
+    if (deja) { localStorage.setItem(cle, "-1"); return; }
+    if (!CURRENT_USER || CURRENT_USER.uid !== user.uid) return;
+    localStorage.setItem(cle, String(Date.now()));
+    const o = document.createElement("div"); o.id = "parcoursRappel"; o.className = "modal-overlay open";
+    o.innerHTML = `<div class="modal" role="dialog" aria-modal="true">
+      <div class="modal-head"><h2>${EN_ ? "Join the Builder Journey" : "Rejoins le Parcours Bâtisseur"}</h2><button type="button" class="modal-close" id="pr-x" aria-label="${EN_ ? "Close" : "Fermer"}">×</button></div>
+      <p>${EN_ ? "A 12-month journey with ABBA: 6 months of training, then 6 months of putting it into action, with a coordinator beside you. Request your access, it only takes a minute." : "Un parcours de 12 mois avec ABBA : 6 mois de formation, puis 6 mois de mise en action, avec un coordinateur à tes côtés. Demande ton accès, cela ne prend qu'une minute."}</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;">
+        <button type="button" class="btn-primary" id="pr-go">${EN_ ? "I want to join" : "Je m'inscris"}</button>
+        <button type="button" class="btn-secondary" id="pr-later">${EN_ ? "Later" : "Plus tard"}</button>
+      </div></div>`;
+    document.body.appendChild(o);
+    const fermer = () => o.remove();
+    document.getElementById("pr-x").addEventListener("click", fermer);
+    document.getElementById("pr-later").addEventListener("click", fermer);
+    document.getElementById("pr-go").addEventListener("click", () => { location.href = "/abba-batisseur/?demande=formation"; });
+  } catch (e) { console.error("rappel Parcours:", e); }
+}
+
 async function onAuthChanged(user) {
   // On coupe les anciens écouteurs à chaque changement de compte
   if (unsubSettings) { unsubSettings(); unsubSettings = null; }
@@ -359,6 +391,7 @@ async function onAuthChanged(user) {
 
   // Seul le coordinateur principal (PPV) modifie la checklist et la liste des modules
   IS_ADMIN = window.AbbaSync.isAdminEmail(user.email);
+  rappelParcoursHebdo(user);
   document.querySelectorAll(".admin-only").forEach(el => { el.style.display = IS_ADMIN ? "" : "none"; });
 
   // Écoute en direct la checklist partagée
