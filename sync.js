@@ -9,7 +9,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {
   getFirestore, doc, getDoc, setDoc, deleteDoc, onSnapshot, serverTimestamp,
-  enableIndexedDbPersistence, collection, getDocs,
+  enableIndexedDbPersistence, getDocFromCache, getDocsFromCache, collection, getDocs,
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { firebaseConfig, ADMIN_EMAILS } from "./firebase-config.js";
 
@@ -38,8 +38,17 @@ async function logIn(email, password) {
   return cred.user;
 }
 async function logOut() { await signOut(auth); }
+/* Lecture ponctuelle qui ne casse pas hors connexion : réseau d'abord, puis la copie gardée sur le téléphone, sinon « rien trouvé ». */
+const _horsReseau = (e) => (typeof navigator !== "undefined" && navigator.onLine === false) || /unavailable|offline|network|failed-precondition/i.test(String((e && (e.code || e.message)) || ""));
+const _docVide = (ref) => ({ exists: () => false, data: () => undefined, id: ref.id, ref, metadata: { fromCache: true } });
+async function lireDoc(ref) {
+  try { return await getDoc(ref); } catch (e) {
+    if (!_horsReseau(e)) throw e;
+    try { return await getDocFromCache(ref); } catch (e2) { return _docVide(ref); }
+  }
+}
 async function getUserProfile(uid) {
-  const snap = await getDoc(doc(db, "users", uid));
+  const snap = await lireDoc(doc(db, "users", uid));
   return snap.exists() ? snap.data() : null;
 }
 function watchAuth(callback) { onAuthStateChanged(auth, callback); }
@@ -113,7 +122,7 @@ function watchMonth(uid, monthKey, callback) {
   }, (err) => console.error("watchMonth:", err));
 }
 async function getMonthOnce(uid, monthKey) {
-  const snap = await getDoc(doc(db, "users", uid, "months", monthKey));
+  const snap = await lireDoc(doc(db, "users", uid, "months", monthKey));
   return snap.exists() ? snap.data() : null;
 }
 async function saveMonth(uid, monthKey, monthData) {

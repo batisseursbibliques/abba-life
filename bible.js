@@ -836,6 +836,58 @@ async function ouvrirOnglet() {
 }
 
 window.addEventListener("abba:bible-ouvert", ouvrirOnglet);
+/* ---------- Téléchargement automatique (silencieux) ----------
+   Une fois connecté, avec du réseau, toute la Bible (les versions de ta langue + les références croisées) est gardée sur le téléphone,
+   y compris les versions réservées. Ensuite elle se lit sans connexion. On ne garde rien en mémoire vive : on écrit directement sur le téléphone. */
+let autoEnCours = false;
+async function telechargementAuto() {
+  if (autoEnCours || navigator.onLine === false || !window.AbbaSync?.loadBibleLivre) return;
+  autoEnCours = true;
+  try {
+    try { navigator.storage?.persist?.(); } catch { /* ignoré */ }
+    const index = await chargerIndex();
+    const taches = [];
+    for (const v of index.versions) {
+      if (!EN() && v.langue === "en" && !v.protegee) continue;   // interface française : on ne télécharge pas les versions anglaises
+      for (let n = 1; n <= 66; n++) taches.push({ cle: `s:${v.id}/${n}`, v, n });
+    }
+    for (let n = 1; n <= 66; n++) taches.push({ cle: `x2:${n}`, n, xref: true });
+    let pos = 0;
+    const ouvrier = async () => {
+      while (pos < taches.length) {
+        if (navigator.onLine === false) return;
+        const t = taches[pos++];
+        try {
+          if ((await lireLocal(t.cle)) !== undefined) continue;
+          if (t.xref) {
+            const r = await fetch(`${BASE}/xref/${nn(t.n)}.json`);
+            if (r.ok) await ecrireLocal(t.cle, await r.json());
+          } else if (t.v.protegee) {
+            const d = await window.AbbaSync.loadBibleLivre(`${t.v.id}_${nn(t.n)}`);
+            if (!d) continue;
+            const out = [];
+            Object.keys(d.chapitres || {}).forEach((k) => { out[Number(k) - 1] = d.chapitres[k]; });
+            for (let i = 0; i < out.length; i++) if (!out[i]) out[i] = [];
+            await ecrireLocal(t.cle, out);
+          } else {
+            const r = await fetch(`${BASE}/${t.v.id}/${nn(t.n)}.json`);
+            if (r.ok) await ecrireLocal(t.cle, await r.json());
+          }
+        } catch { /* ce livre sera repris à la prochaine ouverture avec réseau */ }
+      }
+    };
+    await Promise.all([ouvrier(), ouvrier(), ouvrier()]);
+  } catch { /* hors connexion ou pas encore connecté : on reprendra plus tard */ }
+  finally { autoEnCours = false; }
+}
+{
+  const lancerAuto = () => setTimeout(telechargementAuto, 6000);
+  const surAuth = (u) => { if (u) lancerAuto(); };
+  if (window.AbbaSync?.watchAuth) window.AbbaSync.watchAuth(surAuth);
+  else window.addEventListener("load", () => { if (window.AbbaSync?.watchAuth) window.AbbaSync.watchAuth(surAuth); });
+  window.addEventListener("online", lancerAuto);
+}
+
 window.AbbaBible = { ouvrir: ouvrirOnglet, aller: (l, c, v) => { ouvrirOnglet().then(() => aller(l, c, v)); }, nom: (l) => nomLivre(l), lire: (l, c) => ouvrirOnglet().then(() => { S.vue = "lire"; majOnglets(); aller(l, c); }), plan: () => ouvrirOnglet().then(() => { S.vue = "plan"; majOnglets(); if (window.AbbaLecture) window.AbbaLecture.rendre($("bibPlan")); }) };
 
 /* ============================================================

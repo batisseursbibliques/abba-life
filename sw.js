@@ -1,7 +1,7 @@
-const CACHE_NAME = "abba-life-v31";
+const CACHE_NAME = "abba-life-v32";
 const ASSETS = [
   "./", "./index.html", "./style.css", "./i18n.js", "./lang/en.json", "./bible.js", "./lecture.js", "./plans.js", "./voixNative.js", "./rappelsAgenda.js", "./app.js", "./sync.js", "./firebase-config.js",
-  "./manifest.json", "./logo.png", "./icon-192.png", "./icon-512.png",
+  "./manifest.json", "/bible/index.json", "./logo.png", "./icon-192.png", "./icon-512.png",
   // Habillage commun (même adresse que l'accueil : l'image n'est téléchargée qu'une fois pour les trois apps)
   "/abba-batisseur/habillage.css", "/abba-batisseur/habillage.js", "/abba-batisseur/barre.js", "/abba-batisseur/fond-accueil.webp",
   // Le SDK Firebase lui-même (fichiers statiques et versionnés) : indispensable pour que
@@ -65,6 +65,8 @@ self.addEventListener("fetch", (event) => {
   // Les vraies requêtes Firebase (authentification, Firestore) doivent toujours
   // aller directement au réseau — jamais interceptées, jamais mises en cache.
   if (url.origin !== self.location.origin) return;
+  // Les livres de la Bible sont gardés dans la base du téléphone (IndexedDB) par l'application : pas de double copie ici
+  if (url.pathname.startsWith("/bible/") && url.pathname !== "/bible/index.json") return;
 
   // L'image du bandeau ne change pas : on la sert du cache sans jamais la retélécharger (forfaits limités).
   if (url.pathname === "/abba-batisseur/fond-accueil.webp") {
